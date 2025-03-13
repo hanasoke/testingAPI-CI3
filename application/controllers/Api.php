@@ -42,7 +42,7 @@ class Api extends CI_Controller {
         }
 
         // PUT/PATCH: Update user
-        elseif($method === 'put' || $method === 'patch') {
+        elseif ($method === 'put' || $method === 'patch') {
             $this->load->library('form_validation');
             $json_input = file_get_contents('php://input');
             $data = json_decode($json_input, true);
@@ -50,31 +50,34 @@ class Api extends CI_Controller {
             // Validate input
             $this->form_validation->set_data($data);
             if (isset($data['name'])) {
-                $this->form_validation->set_rules('name', 'Name', 'required|is_unique[users.name.id]'.$id.']');
+                // CORRECTED RULE: is_unique[users.name.id.10]
+                $this->form_validation->set_rules('name', 'Name', 'required|is_unique[users.name.id.'.$id.']');
             }
 
-            if(isset($data['email'])) {
+            if (isset($data['email'])) {
+                // CORRECTED RULE: is_unique[users.email.id.10]
                 $this->form_validation->set_rules('email', 'Email', 'required|valid_email|is_unique[users.email.id.'.$id.']');
             }
 
             if ($this->form_validation->run() == FALSE) {
-                $this->output 
+                $this->output
                     ->set_status_header(400)
                     ->set_content_type('application/json')
                     ->set_output(json_encode(['error' => validation_errors()]));
                 return;
             }
 
+            // Update the user
             $this->db->where('id', $id);
             $this->db->update('users', $data);
 
             // Success response
-            $this->output 
+            $this->output
                 ->set_status_header(200)
                 ->set_content_type('application/json')
                 ->set_output(json_encode(['message' => 'User updated']));
-        } 
-        
+        }
+
         // PUT/PATCH: Update user (existing code)
         elseif($method === 'delete') {
             // Check if user exists
