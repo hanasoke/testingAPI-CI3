@@ -25,17 +25,94 @@ class Api extends CI_Controller {
     // Example: Get a single user by ID
     public function user($id) {
         $this->load->database();
-        $query = $this->db->get_where('users', array('id' => $id));
+        $method = $this->input->method(); // Get HTTP method (get, put, patch)
 
-        if ($query->num_rows() > 0) {
-            $this->output
-                 ->set_content_type('application/json')
-                 ->set_output(json_encode($query->row()));
-        } else {
+        // GET: View user
+        if ($method === 'get') {
+            $user = $this->db->get_where('users', ['id' => $id])->row();
+            if($user) {
+                $this->output 
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode($user));
+            } else {
+                $this->output 
+                    ->set_status_header(404)
+                    ->set_output(json_encode(['error' => 'User not found']));
+            }
+        }
+
+        // PUT/PATCH: Update user
+        elseif($method === 'put' || $method === 'patch') {
+            $this->load->library('form_validation');
+            $json_input = file_get_contents('php://input');
+            $data = json_decode($json_input, true);
+
+            // Validate input
+            $this->form_validation->set_data($data);
+            if (isset($data['name'])) {
+                $this->form_validation->set_rules('name', 'Name', 'required|is_unique[users.name.id]'.$id.']');
+            }
+
+            if(isset($data['email'])) {
+                $this->form_validation->set_rules('email', 'Email', 'required|valid_email|is_unique[users.email.id.'.$id.']');
+            }
+
+            if ($this->form_validation->run() == FALSE) {
+                $this->output 
+                    ->set_status_header(400)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => validation_errors()]));
+                return;
+            }
+
+            $this->db->where('id', $id);
+            $this->db->update('users', $data);
+
+            // Success response
             $this->output 
-                ->set_status_header(404)
+                ->set_status_header(200)
                 ->set_content_type('application/json')
-                ->set_output(json_encode(array('error' => 'Resource not found')));
+                ->set_output(json_encode(['message' => 'User updated']));
+        } 
+        
+        // PUT/PATCH: Update user (existing code)
+        elseif($method === 'delete') {
+            // Check if user exists
+            $user = $this->db->get_where('users', ['id' => $id])->row();
+            if(!$user) {
+                $this->output
+                    ->set_status_header(404)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => 'User not found']));
+                return;
+            }
+
+            // Delete the user
+            $this->db->where('id', $id);
+            $this->db->delete('users');
+
+            // Check for database errors 
+            if($this->db->affected_rows() == 0) {
+                $this->output 
+                    ->set_status_header(500)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => 'Failed to delete user']));
+                return;
+            }
+
+            // Success response 
+            $this->output 
+                ->set_status_header(200)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['message' => 'User deleted sucessfully']));
+        }
+
+        // Handle Invalid methods
+        else {
+            $this->output
+                ->set_status_header(405)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['error' => 'Method Not Allowed']));
         }
     }
 
@@ -44,35 +121,39 @@ class Api extends CI_Controller {
         $this->load->database();
         $this->load->library('form_validation');
 
-        // Read raw JSON input
+        // Read JSON input
         $json_input = file_get_contents('php://input');
         $data = json_decode($json_input, true);
 
-        // Validate input
-        $this->form_validation->set_data($data); // Set validation data
-        $this->form_validation->set_rules('name', 'Name', 'required');
+        // Validate input (including uniqueness)
+        $this->form_validation->set_data($data);
+        $this->form_validation->set_rules('name', 'Name', 'required|is_unique[users.name]');
         $this->form_validation->set_rules('email', 'Email', 'required|valid_email|is_unique[users.email]');
+
+        // Custom error message for duplicate name
+        $this->form_validation->set_message('is_unique', 'The %s field must be unique.');
 
         if($this->form_validation->run() == FALSE) {
             $this->output
                 ->set_status_header(400)
                 ->set_content_type('application/json')
                 ->set_output(json_encode(array('error' => validation_errors())));
+                return;
         } else {
             // Insert into database
             $this->db->insert('users', $data);
 
             // Check for database errors (e.g., race condition duplicates)
             if ($this->db->error()['code'] == 1062) {
-                // MySQL duplicate error code
+                // MySQL error code for duplicates
                 $this->output
                     ->set_status_header(409)
                     ->set_content_type('application/json')
-                    ->set_output(json_encode(array('error' => 'Email already exists')));
+                    ->set_output(json_encode(array('error' => 'Name or email already exists')));
                 return;
             }
 
-            // Return success message as JSON
+            // Success Response
             $this->output
                  ->set_status_header(201)
                  ->set_content_type('application/json')

@@ -53,6 +53,6 @@ $route['default_controller'] = 'welcome';
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
 
-$route['api/users'] = 'api/users';
-$route['api/user/(:num)'] = 'api/user/$1';
-$route['api/create_user'] = 'api/create_user';
+$route['api/users'] = 'api/users'; // Get all users
+$route['api/user/(:num)'] = 'api/user/$1'; // Handle GET/PUT/PATCH here
+$route['api/create_user'] = 'api/create_user'; // POST create user
