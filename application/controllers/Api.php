@@ -132,6 +132,9 @@ class Api extends CI_Controller {
         $this->form_validation->set_data($data);
         $this->form_validation->set_rules('name', 'Name', 'required|is_unique[users.name]');
         $this->form_validation->set_rules('email', 'Email', 'required|valid_email|is_unique[users.email]');
+        $this->form_validation->set_rules('age', 'Age', 'required');
+        $this->form_validation->set_rules('phone', 'Phone', 'required|is_unique[users.phone]');
+        $this->form_validation->set_rules('address', 'Address', 'required');
 
         // Custom error message for duplicate name
         $this->form_validation->set_message('is_unique', 'The %s field must be unique.');
@@ -152,7 +155,7 @@ class Api extends CI_Controller {
                 $this->output
                     ->set_status_header(409)
                     ->set_content_type('application/json')
-                    ->set_output(json_encode(array('error' => 'Name or email already exists')));
+                    ->set_output(json_encode(array('error' => 'Name, email, or phone already exists')));
                 return;
             }
 
