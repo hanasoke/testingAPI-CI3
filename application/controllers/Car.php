@@ -31,6 +31,13 @@ class Car extends CI_Controller {
         if($method === 'get') {
             $car = $this->db->get_where('cars', ['id' => $id])->row();
             if($car) {
+                // Format the data
+                $car->Seat = $car->seat . ' seat';
+                $car->Machine = $car->machine . ' cc';
+                $car->Power = $car->power . ' hp';
+                $car->Price = 'Rp ' . number_format($car->price, 0, ',', '.');
+                $car->Manufacture = date('Y-m-d', strtotime(str_replace('/', '-', $car->manufacture)));
+                
                 $this->output
                     ->set_content_type('application/json')
                     ->set_output(json_encode($car));
