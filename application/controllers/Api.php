@@ -47,18 +47,38 @@ class Api extends CI_Controller {
             $json_input = file_get_contents('php://input');
             $data = json_decode($json_input, true);
 
+            // Fetch existing user data
+            $existing_user = $this->db->get_where('users', ['id' => $id])->row();
+
             // Validate input
             $this->form_validation->set_data($data);
-            if (isset($data['name'])) {
-                // CORRECTED RULE: is_unique[users.name.id.10]
+
+            // Validate "name" only if it's new 
+            if (isset($data['name']) && $data['name'] != $existing_user->name ) {
                 $this->form_validation->set_rules('name', 'Name', 'required|is_unique[users.name.id.'.$id.']');
             }
 
-            if (isset($data['email'])) {
-                // CORRECTED RULE: is_unique[users.email.id.10]
+            // Validate "email" if present
+            if (isset($data['email']) && $data['email'] != $existing_user->email) {
                 $this->form_validation->set_rules('email', 'Email', 'required|valid_email|is_unique[users.email.id.'.$id.']');
             }
 
+            // Validate "age" if present
+            if(isset($data['age'])) {
+                $this->form_validation->set_rules('age', 'Age', 'required|numeric');
+            }
+
+            // Validate "phone" if present (FIXED SYNTAX)
+            if(isset($data['phone']) && $data['phone'] != $existing_user->phone) {
+                $this->form_validation->set_rules('phone', 'Phone', 'required|numeric|is_unique[users.phone.id.'.$id.']');
+            }
+
+            // Validate "address" if present (no uniqueness check)
+            if(isset($data['address'])) {
+                $this->form_validation->set_rules('address', 'Address', 'required');
+            }
+
+            // Run validation
             if ($this->form_validation->run() == FALSE) {
                 $this->output
                     ->set_status_header(400)
@@ -67,7 +87,16 @@ class Api extends CI_Controller {
                 return;
             }
 
-            // Update the user
+            // Convert numeric fields to integers
+            if(isset($data['age'])) {
+                $data['age'] = (int)$data['age'];
+            }
+
+            if(isset($data['phone'])) {
+                $data['phone'] = (int)$data['phone'];
+            }
+
+            // Update the provided fields
             $this->db->where('id', $id);
             $this->db->update('users', $data);
 
@@ -78,7 +107,7 @@ class Api extends CI_Controller {
                 ->set_output(json_encode(['message' => 'User updated']));
         }
 
-        // PUT/PATCH: Update user (existing code)
+        // Delete user (existing code)
         elseif($method === 'delete') {
             // Check if user exists
             $user = $this->db->get_where('users', ['id' => $id])->row();
