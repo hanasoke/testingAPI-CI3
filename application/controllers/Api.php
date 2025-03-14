@@ -25,7 +25,7 @@ class Api extends CI_Controller {
     // Example: Get a single user by ID
     public function user($id) {
         $this->load->database();
-        $method = $this->input->method(); // Get HTTP method (get, put, patch)
+        $method = $this->input->method(); // Get HTTP method (get, put, patch, delete)
 
         // GET: View user
         if ($method === 'get') {
@@ -149,7 +149,7 @@ class Api extends CI_Controller {
     }
 
     // Example: Create a new user
-    public function create_user() {
+    public function add_car() {
         $this->load->database();
         $this->load->library('form_validation');
 
@@ -159,10 +159,15 @@ class Api extends CI_Controller {
 
         // Validate input (including uniqueness)
         $this->form_validation->set_data($data);
+
         $this->form_validation->set_rules('name', 'Name', 'required|is_unique[users.name]');
+
         $this->form_validation->set_rules('email', 'Email', 'required|valid_email|is_unique[users.email]');
+
         $this->form_validation->set_rules('age', 'Age', 'required');
+
         $this->form_validation->set_rules('phone', 'Phone', 'required|numeric|is_unique[users.phone]');
+        
         $this->form_validation->set_rules('address', 'Address', 'required');
 
         // Convert numeric fields to integers
