@@ -15,6 +15,17 @@ class Car extends CI_Controller {
         // Load the database and query
         $this->load->database();
         $query = $this->db->get('cars'); // Assuming you have a 'users' table
+        $cars = $query->result(); // Fetch all cars
+
+        // Loop through each car to format the data 
+        foreach($cars as $car) {
+            // Format the data
+            $car->Seat = $car->seat . ' seat';
+            $car->Machine = $car->machine . ' cc';
+            $car->Power = $car->power . ' hp';
+            $car->Price = 'Rp ' . number_format($car->price, 0, ',', '.');
+            $car->Manufacture = date('Y-m-d', strtotime(str_replace('/', '-', $car->manufacture)));
+        }
 
         // Return JSON response
         $this->output
