@@ -149,7 +149,7 @@ class Api extends CI_Controller {
     }
 
     // Example: Create a new user
-    public function add_car() {
+    public function create_user() {
         $this->load->database();
         $this->load->library('form_validation');
 
