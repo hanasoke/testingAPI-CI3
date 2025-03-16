@@ -187,7 +187,6 @@ class Car extends CI_Controller {
                 ->set_content_type('application/json')
                 ->set_output(json_encode(['error' => 'Method Not Allowed']));
         }
-
     }
 
     // Example: Create a new car
