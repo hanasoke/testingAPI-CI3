@@ -57,6 +57,6 @@ $route['api/users'] = 'api/users'; // Get all users
 $route['api/user/(:num)'] = 'api/user/$1'; // Handle GET/PUT/PATCH here
 $route['api/create_user'] = 'api/create_user'; // POST create user
 
-$route['car/cars'] = 'car/cars'; // Get all users
+$route['car/cars'] = 'car/cars'; // Get all cars
 $route['car/car/(:num)'] = 'car/car/$1'; // Handle GET/PUT/PATCH here
 $route['car/add_car'] = 'car/add_car'; // POST create car

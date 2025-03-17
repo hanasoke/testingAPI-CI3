@@ -14,7 +14,7 @@ class Car extends CI_Controller {
     public function cars() {
         // Load the database and query
         $this->load->database();
-        $query = $this->db->get('cars'); // Assuming you have a 'users' table
+        $query = $this->db->get('cars'); // Assuming you have a 'cars' table
         $cars = $query->result(); // Fetch all cars
 
         // Loop through each car to format the data 
