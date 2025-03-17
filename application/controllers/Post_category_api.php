@@ -54,8 +54,11 @@ class Post_category_api extends CI_Controller {
             if(isset($data['name']) && $data['name'] != $existing->name) {
                 $this->form_validation->set_rules('name', 'Name', 'required|is_unique[post_category.name]');
             }
-            
-            $this->form_validation->set_rules('slug', 'Slug', 'required');
+
+            // Validate slug if changed
+            if(isset($data['slug']) && $data['slug'] != $existing->slug) {
+                $this->form_validation->set_rules('slug', 'Slug', 'required|is_unique[post_category.slug]');
+            }
             
             if($this->form_validation->run()) {
                 $update_data = [
@@ -109,7 +112,7 @@ class Post_category_api extends CI_Controller {
         $this->form_validation->set_data($data);
         
         $this->form_validation->set_rules('name', 'Name', 'required|is_unique[post_category.name]');
-        $this->form_validation->set_rules('slug', 'Slug', 'required');
+        $this->form_validation->set_rules('slug', 'Slug', 'required|is_unique[post_category.slug]');
         $this->form_validation->set_rules('created_by', 'Created By', 'required');
 
         if ($this->form_validation->run()) {
