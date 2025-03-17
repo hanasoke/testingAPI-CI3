@@ -59,6 +59,11 @@ class Post_category_api extends CI_Controller {
             if(isset($data['slug']) && $data['slug'] != $existing->slug) {
                 $this->form_validation->set_rules('slug', 'Slug', 'required|is_unique[post_category.slug]');
             }
+
+            // Validate updated_by if changed
+            if(isset($data['updated_by']) && $data['updated_by'] != $existing->updated_by) {
+                $this->form_validation->set_rules('updated_by', 'Updated_by', 'required');
+            }
             
             if($this->form_validation->run()) {
                 $update_data = [
