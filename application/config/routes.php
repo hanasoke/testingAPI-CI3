@@ -64,3 +64,4 @@ $route['car/add_car'] = 'car/add_car'; // POST create car
 $route['post_category'] = 'post_category_api/categories';
 $route['post_category/(:num)'] = 'post_category_api/category/$1';
 $route['post_category/add'] = 'post_category_api/add_category';
+
