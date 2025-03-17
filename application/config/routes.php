@@ -60,3 +60,7 @@ $route['api/create_user'] = 'api/create_user'; // POST create user
 $route['car/cars'] = 'car/cars'; // Get all cars
 $route['car/car/(:num)'] = 'car/car/$1'; // Handle GET/PUT/PATCH here
 $route['car/add_car'] = 'car/add_car'; // POST create car
+
+$route['post_category'] = 'post_category_api/categories';
+$route['post_category/(:num)'] = 'post_category_api/category/$1';
+$route['post_category/add'] = 'post_category_api/add_category';
