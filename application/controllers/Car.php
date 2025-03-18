@@ -148,7 +148,7 @@ class Car extends CI_Controller {
 
         // Delete car (existing code)
         elseif ($method === 'delete') {
-            // Check if user exists
+            // Check if car exists
             $car = $this->db->get_where('cars', ['id' => $id])->row();
             if(!$car) {
                 $this->output

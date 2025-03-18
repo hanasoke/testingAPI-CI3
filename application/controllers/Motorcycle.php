@@ -144,7 +144,48 @@ class Motorcycle extends CI_Controller {
                 ->set_status_header(200)
                 ->set_content_type('application/json')
                 ->set_output(json_encode(['message' => 'Motorcycle Updated']));
-        } 
+        }
+        
+        // Delete motorcycle (existing code)
+        elseif ($method === 'delete') {
+            // Check if car exists
+            $motorcycle = $this->db->get_where('motorcycles', ['id_motor' => $id])->row();
+
+            if (!$motorcycle) {
+                $this->output 
+                    ->set_status_header(404)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => 'Motorcycle not found']));
+                return;
+            }
+
+            // Delete the motorcycle
+            $this->db->where('id_motor', $id);
+            $this->db->delete('motorcycles');
+
+            // Check for database errors 
+            if($this->db->affected_rows() == 0) {
+                $this->output 
+                    ->set_status_header(500)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => 'Failed to delete a motorcycle']));
+                return;
+            }
+
+            // Success response
+            $this->output
+                ->set_status_header(200)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['message' => 'Motorcycle deleted successfully']));
+        }
+
+        // Handle Invalid methods
+        else {
+            $this->output 
+                ->set_status_header(405)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['error' => 'Method Not Allowed']));
+        }
     }
 
     // Example: Create a new motorcycle
