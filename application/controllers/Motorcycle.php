@@ -30,15 +30,14 @@ class Motorcycle extends CI_Controller {
     }
 
     // Example: Get a single car by ID
-    public function motorcycle($id) {
-        $this->load->database();
+    public function detail($id) {
         $method = $this->input->method(); // Get HTTP method (get, put, patch, delete)
 
         // Get: View motorcycle
         if($method === 'get') {
-            $motorcycle = $this->db->get_where('motorcycles', ['id' => $id])->row();
+            $motorcycle = $this->db->get_where('motorcycles', ['id_motor' => $id])->row();
 
-            if($car) {
+            if($motorcycle) {
                 // Format the data
                 $motorcycle->Volume = $motorcycle->volume . ' cc';
                 $motorcycle->Created_date = date('Y-m-d', strtotime(str_replace('/', '-', $motorcycle->created_date)));
@@ -52,6 +51,100 @@ class Motorcycle extends CI_Controller {
                     ->set_output(json_encode(['error' => 'Motorcycle not found']));
             }
         }
+
+        // PUT/PATCH: Update motorcycle
+        elseif ($method === 'put' || $method === 'patch') {
+            $json_input = file_get_contents('php://input');
+
+            // Check if input is empty
+            if(empty($json_input)) {
+                $this->output 
+                    ->set_status_header(400)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => 'Empty request body']));
+                return;
+            }
+
+            // Decode JSON input
+            $data = json_decode($json_input, true);
+
+            // Check if JSON is valid
+            if(json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
+                $this->output 
+                    ->set_status_header(400)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => 'Invalid JSON format']));
+                return;
+            }
+
+            // Fetch existing car data 
+            $existing_motorcycle = $this->db->get_where('motorcycles', ['id_motor' => $id])->row();
+
+            // Validate input
+            $this->form_validation->set_data($data);
+
+            // Validate "name" only if it's new
+            if(isset($data['name']) && $data['name'] != $existing_motorcycle->name) {
+                $this->form_validation->set_rules('name', 'Name', 'required|is_unique[motorcycles.name.id.'.$id.']');
+            }
+
+            // Validate "color" if present
+            if(isset($data['color'])) {
+                $this->form_validation->set_rules('color', 'Color', 'required');
+            }
+
+            // Validate "brand" if present
+            if(isset($data['brand'])) {
+                $this->form_validation->set_rules('brand', 'Brand', 'required');
+            }
+
+            // Validate "type" if present
+            if(isset($data['type'])) {
+                $this->form_validation->set_rules('type', 'Type', 'required');
+            }
+
+            // Validate "machine" if present
+            if(isset($data['machine'])) {
+                $this->form_validation->set_rules('machine', 'Machine', 'required');
+            }
+
+            // Validate "volume" if present
+            if(isset($data['volume'])) {
+                $this->form_validation->set_rules('volume', 'Volume', 'required');
+            }
+
+            // Run validation
+            if($this->form_validation->run() == FALSE) {
+                $this->output
+                    ->set_status_header(400)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => validation_errors()]));
+                return;
+            }
+
+            // Convert numeric fields to float
+            if(isset($data['volume'])) $data['volume'] = (float) $data['volume'];
+
+            $update_data = [
+                'name' => $data['name'],
+                'brand' => $data['brand'],
+                'color' => $data['color'],
+                'type' => $data['type'],
+                'machine' => $data['machine'],
+                'volume' => $data['volume'],
+                'updated_date' => date('Y-m-d H:i:s')
+            ];
+
+            // Update the provided fields 
+            $this->db->where('id_motor', $id);
+            $this->db->update('motorcycles', $update_data);
+
+            // Success response
+            $this->output 
+                ->set_status_header(200)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['message' => 'Motorcycle Updated']));
+        } 
     }
 
     // Example: Create a new motorcycle
@@ -98,7 +191,8 @@ class Motorcycle extends CI_Controller {
                 'type' => $data['type'],
                 'machine' => $data['machine'],
                 'volume' => $data['volume'],
-                'created_date' => date('Y-m-d H:i:s')
+                'created_date' => date('Y-m-d H:i:s'),
+                'updated_date' => null
             ];
             // Insert into database 
             $this->db->insert('motorcycles', $insert_data);

@@ -60,7 +60,6 @@ class Car extends CI_Controller {
 
         // PUT/PATCH: Update car
         elseif($method === 'put' || $method === 'patch') {
-            $this->load->library('form_validation');
             $json_input = file_get_contents('php://input');
             $data = json_decode($json_input, true);
 
@@ -110,7 +109,7 @@ class Car extends CI_Controller {
                 $this->form_validation->set_rules('stock', 'Stock', 'required|numeric');
             }
 
-             // Validate "machine" if present
+            // Validate "machine" if present
             if(isset($data['machine'])) {
                 $this->form_validation->set_rules('machine', 'Machine', 'required');
             }
