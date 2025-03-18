@@ -65,3 +65,7 @@ $route['post_category'] = 'post_category_api/categories';
 $route['post_category/(:num)'] = 'post_category_api/category/$1';
 $route['post_category/add'] = 'post_category_api/add_category';
 
+$route['motorcycles'] = 'motorcycle/all';
+$route['motorcycle/(:num)'] = 'motorcycle/detail/$1';
+$route['motorcycle/add'] = 'motorcycle/add_motorcycle';
+

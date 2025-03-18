@@ -8,12 +8,12 @@ class Car extends CI_Controller {
         // Load any necessary libraries or helpers
         $this->load->helper('url');
         $this->load->library('form_validation');
+        $this->load->database();
     }
 
     // Example: Get all cars
     public function cars() {
         // Load the database and query
-        $this->load->database();
         $query = $this->db->get('cars'); // Assuming you have a 'cars' table
         $cars = $query->result(); // Fetch all cars
 
@@ -35,7 +35,6 @@ class Car extends CI_Controller {
 
     // Example: Get a single car by ID
     public function car($id) {
-        $this->load->database();
         $method = $this->input->method(); // Get HTTP method (get, put, patch, delete)
 
         // Get: View user
@@ -191,9 +190,6 @@ class Car extends CI_Controller {
 
     // Example: Create a new car
     public function add_car() {
-        $this->load->database();
-        $this->load->library('form_validation');
-
         // Read JSON input
         $json_input = file_get_contents('php://input');
         $data = json_decode($json_input, true);
