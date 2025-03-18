@@ -24,7 +24,14 @@ class Car extends CI_Controller {
             $car->Machine = $car->machine . ' cc';
             $car->Power = $car->power . ' hp';
             $car->Price = 'Rp ' . number_format($car->price, 0, ',', '.');
-            $car->Manufacture = date('Y-m-d', strtotime(str_replace('/', '-', $car->manufacture)));
+            $car->Manufacture = date('Y-m-d', strtotime(str_replace('/', '-', $car->manufacture))); // Convert date
+
+            // Optionally, remove the original fields to avoid duplication
+            unset($car->seat);
+            unset($car->machine);
+            unset($car->power);
+            unset($car->price);
+            unset($car->manufacture);
         }
 
         // Return JSON response
@@ -41,16 +48,24 @@ class Car extends CI_Controller {
         if($method === 'get') {
             $car = $this->db->get_where('cars', ['id' => $id])->row();
             if($car) {
-                // Format the data
-                $car->Seat = $car->seat . ' seat';
-                $car->Machine = $car->machine . ' cc';
-                $car->Power = $car->power . ' hp';
-                $car->Price = 'Rp ' . number_format($car->price, 0, ',', '.');
-                $car->Manufacture = date('Y-m-d', strtotime(str_replace('/', '-', $car->manufacture)));
+                // Create a new array with formatted data
+                $response = [
+                    'id' => $car->id,
+                    'name' => $car->name,
+                    'color' => $car->color,
+                    'brand' => $car->brand,
+                    'transmission' => $car->transmission,
+                    'seat' => $car->seat . ' seat',
+                    'machine' => $car->machine . ' cc',
+                    'power' => $car->power . ' hp',
+                    'price' => 'Rp ' . number_format($car->price, 0, ',', '.'),
+                    'manufacture' => date('Y-m-d', strtotime(str_replace('/', '-', 
+                    $car->manufacture))), // Formatted date
+                ];
                 
                 $this->output
                     ->set_content_type('application/json')
-                    ->set_output(json_encode($car));
+                    ->set_output(json_encode($response));
             } else {
                 $this->output
                     ->set_status_header(404)

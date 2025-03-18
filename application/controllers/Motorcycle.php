@@ -21,6 +21,10 @@ class Motorcycle extends CI_Controller {
         foreach ($motorcycles as $motorcycle) {
             // Formet the data
             $motorcycle->Volume = $motorcycle->volume . ' cc';
+
+            // Remove original fields to avoid duplication
+            unset($motorcycle->volume);
+            unset($motorcycle->created_date);
         }
 
         // Return JSON response
@@ -41,6 +45,10 @@ class Motorcycle extends CI_Controller {
                 // Format the data
                 $motorcycle->Volume = $motorcycle->volume . ' cc';
                 $motorcycle->Created_date = date('Y-m-d', strtotime(str_replace('/', '-', $motorcycle->created_date)));
+
+                // Remove original fields to avoid duplication
+                unset($motorcycle->volume);
+                unset($motorcycle->created_date);
 
                 $this->output 
                     ->set_content_type('application/json')
