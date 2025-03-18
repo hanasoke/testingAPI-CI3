@@ -35,6 +35,13 @@ class Motorcycle extends CI_Controller {
 
     // Example: Get a single car by ID
     public function detail($id) {
+
+        // Create a DateTime object with the GMT+7 timezone
+        $date = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+
+        // Format the date and time
+        $updated_date = $date->format('Y-m-d H:i:s');
+
         $method = $this->input->method(); // Get HTTP method (get, put, patch, delete)
 
         // Get: View motorcycle
@@ -140,7 +147,7 @@ class Motorcycle extends CI_Controller {
                 'type' => $data['type'],
                 'machine' => $data['machine'],
                 'volume' => $data['volume'],
-                'updated_date' => date('Y-m-d H:i:s')
+                'updated_date' => $updated_date
             ];
 
             // Update the provided fields 
@@ -199,6 +206,12 @@ class Motorcycle extends CI_Controller {
     // Example: Create a new motorcycle
     public function add_motorcycle() {
 
+        // Create a DateTime object with the GMT+7 timezone
+        $date = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+
+        // Format the date and time
+        $created_date = $date->format('Y-m-d H:i:s');
+
         // Read JSON input
         $json_input = file_get_contents('php://input');
         $data = json_decode($json_input, true);
@@ -240,7 +253,7 @@ class Motorcycle extends CI_Controller {
                 'type' => $data['type'],
                 'machine' => $data['machine'],
                 'volume' => $data['volume'],
-                'created_date' => date('Y-m-d H:i:s'),
+                'created_date' => $created_date,
                 'updated_date' => null
             ];
             // Insert into database 
