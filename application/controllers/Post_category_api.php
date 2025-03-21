@@ -22,7 +22,14 @@ class Post_category_api extends CI_Controller {
 
     // Get single category by ID
     public function category($category_id) {
-        $method = $this->input->method();
+
+        // Create a DateTime object with the GMT+7 timezone
+        $date = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+        
+        // Format the date and time
+        $updated_date = $date->format('Y-m-d H:i:s');
+
+        $method = $this->input->method(); // Get HTTP method (get, put, patch, delete)
 
         // GET: View category
         if ($method === 'get') {
@@ -69,7 +76,7 @@ class Post_category_api extends CI_Controller {
                 $update_data = [
                     'name' => $data['name'],
                     'slug' => $data['slug'],
-                    'updated_date' => date('Y-m-d H:i:s'),
+                    'updated_date' => $updated_date,
                     'updated_by' => $data['updated_by']
                 ];
                 
@@ -111,6 +118,13 @@ class Post_category_api extends CI_Controller {
 
     // Create new category
     public function add_category() {
+
+        // Create a DateTime object with the GMT+7 timezone
+        $date = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+        
+        // Format the date and time
+        $created_date = $date->format('Y-m-d H:i:s');
+
         $json_input = file_get_contents('php://input');
         $data = json_decode($json_input, true);
 
@@ -124,7 +138,7 @@ class Post_category_api extends CI_Controller {
             $insert_data = [
                 'name' => $data['name'],
                 'slug' => $data['slug'],
-                'created_date' => date('Y-m-d H:i:s'),
+                'created_date' => $created_date,
                 'created_by' => $data['created_by'],
                 'updated_date' => null,
                 'updated_by' => null
