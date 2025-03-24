@@ -53,99 +53,117 @@ class Vga_cards extends CI_Controller {
 
         // PUT/PATCH: Update Vga Card
         elseif ($method === 'put' || $method === 'patch') {
-             $date = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
-    $update_date = $date->format('Y-m-d H:i:s');
 
-    $existing_card = $this->db->get_where('vga_cards', ['id_card' => $id])->row();
-    if (!$existing_card) {
-        $this->output 
-            ->set_status_header(404)
-            ->set_content_type('application/json')
-            ->set_output(json_encode(['error' => 'VGA Card not found']));
-        return;
-    }
+            // Get existing card data
+            $existing_card = $this->db->get_where('vga_cards', ['id_card' => $id])->row();
 
-    // File Upload Handling
-    if (!empty($_FILES['photo']['name'])) {
-        $config['upload_path'] = './public/img/vga_cards/';
-        $config['allowed_types'] = 'jpg|jpeg|png';
-        $config['max_size'] = 2048;
-        $config['file_name'] = uniqid();
-        $this->upload->initialize($config);
+            if (!$existing_card) {
+                $this->output 
+                    ->set_status_header(404)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => 'Vga Card not found']));
+                return;
+            }
 
-        if (!$this->upload->do_upload('photo')) {
-            $this->output 
-                ->set_status_header(400)
-                ->set_content_type('application/json')
-                ->set_output(json_encode([
-                    'error' => 'File upload failed',
-                    'details' => strip_tags($this->upload->display_errors())
-                ]));
-            return;
-        }
+            // Handle form-data (for file upload)
+            $photo = $existing_card->photo; //Default to existing photo
+            if(!empty($_FILES['photo']['name'])) {
+                // Configure upload 
+                $config['upload_path'] = './public/img/vga_cards/';
 
-        $upload_data = $this->upload->data();
-        $photo = $upload_data['file_name'];
+                $config['allowed_types'] = 'jpg|jpeg|png';
 
-        if (!empty($existing_card->photo) && file_exists('./public/img/vga_cards/' . $existing_card->photo)) {
-            unlink('./public/img/vga_cards/' . $existing_card->photo);
-        }
-    } else {
-        $photo = $existing_card->photo;
-    }
+                $config['max_size'] = 2048; //2MB
+                $config['file_name'] = uniqid();
 
-    // Get Form Data
-    $input = [
-        'name' => $this->input->post('name'),
-        'brand' => $this->input->post('brand'),
-        'price' => $this->input->post('price'),
-        'release_date' => $this->input->post('release_date')
-    ];
+                $this->upload->initialize($config);
 
-    $this->form_validation->set_data($input);
-    $this->form_validation->set_rules('name', 'Name', 'trim|required|max_length[100]');
-    $this->form_validation->set_rules('brand', 'Brand', 'trim|required|in_list[Radeon,Nvidia,Intel]');
-    $this->form_validation->set_rules('price', 'Price', 'trim|required|numeric');
-    $this->form_validation->set_rules('release_date', 'Release Date', 'trim|required');
+                if (!$this->upload->do_upload('photo')) {
+                    $this->output 
+                        ->set_status_header(400)
+                        ->set_content_type('application/json')
+                        ->set_output(json_encode([
+                            'error' => 'File upload failed',
+                            'details' => $this->upload->display_errors()
+                        ]));
+                    return;
+                }
 
-    if ($this->form_validation->run() === FALSE) {
-        if (isset($upload_data) && file_exists($upload_data['full_path'])) {
-            unlink($upload_data['full_path']);
-        }
-        $this->output 
-            ->set_status_header(400)
-            ->set_content_type('application/json')
-            ->set_output(json_encode([
-                'error' => 'Validation failed',
-                'details' => validation_errors()
-            ]));
-        return;
-    }
+                $upload_data = $this->upload->data();
+                $photo = $upload_data['file_name'];
 
-    // Update Data
-    $update_data = [
-        'name' => $input['name'],
-        'brand' => $input['brand'],
-        'price' => $input['price'],
-        'photo' => $photo,
-        'release_date' => $input['release_date'],
-        'updated_date' => $update_date
-    ];
+                // Delete old photo if exists
+                if(!empty($existing_card->photo) && file_exists('./public/img/vga_cards/'. $existing_card->photo)) {
+                    unlink('./public/img/vga_cards/'.$existing_card->photo);
+                }
+            } else {
+                // Keep existing photo 
+                $photo = $existing_card->photo;
+            }
 
-    $this->db->where('id_card', $id);
-    $this->db->update('vga_cards', $update_data);
+            // Get other form data
+            $input = [
+                $name = $this->input->post('name'),
+                $brand = $this->input->post('brand'),
+                $price = $this->input->post('price'),
+                $release_date = $this->input->post('release_date')
+            ];
 
-    if ($this->db->affected_rows() > 0) {
-        $this->output 
-            ->set_status_header(200)
-            ->set_content_type('application/json')
-            ->set_output(json_encode(['message' => 'VGA Card updated successfully']));
-    } else {
-        $this->output
-            ->set_status_header(500)
-            ->set_content_type('application/json')
-            ->set_output(json_encode(['error' => 'Update failed']));
-    }
+            // Validate input
+            $this->form_validation->set_data($input);
+
+            $this->form_validation->set_rules('name', 'Name', 'required|max_length[100]');
+            $this->form_validation->set_rules('brand', 'Brand', 'required|in_list[Radeon,Nvidia,Intel]');
+            $this->form_validation->set_rules('price', 'Price', 'required|numeric');
+            $this->form_validation->set_rules('release_date', 'Release Date', 'required');
+
+            if($this->form_validation->run() === FALSE) {
+                // Delete newly uploaded photo if validation fails
+                if(isset($upload_data) && file_exists($upload_data['full_path'])) {
+                    unlink($upload_data['full_path']);
+                }
+
+                $this->output 
+                    ->set_status_header(400)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'error' => 'Validation failed',
+                        'details' => validation_errors()
+                    ]));
+                return;
+            }
+
+            // Prepare update data
+            $update_data = [
+                'name' => $input['name'],
+                'brand' => $input['brand'],
+                'price' => $input['price'],
+                'photo' => $photo,
+                'release_date' => $input['release_date'],
+                'updated_date' => $update_date 
+            ];
+
+            // Update database
+            $this->db->where('id_card', $id);
+            $this->db->update('vga_cards', $update_data);
+
+            if($this->db->affected_rows() >= 0) {
+                $this->output 
+                    ->set_status_header(200)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'message' => 'VGA Card updated successfully',
+                        'data' =>$update_date
+                    ]));
+            } else {
+                $this->output
+                    ->set_status_header(500)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'error' => 'Failed to update VGA Card',
+                        'details' => $this->db->error()
+                    ]));
+            }
         }
 
         // Delete vga_card (existing_code)
@@ -199,13 +217,13 @@ class Vga_cards extends CI_Controller {
         $created_date = $date->format('Y-m-d H:i:s');
 
         // Validate input (including uniqueness)
-        $this->form_validation->set_rules('name', 'Name', 'is_unique[vga_cards.name]');
+        $this->form_validation->set_rules('name', 'Name', 'required|is_unique[vga_cards.name]');
 
-        $this->form_validation->set_rules('brand', 'Brand', 'in_list[Radeon,Nvidia,Intel]');
+        $this->form_validation->set_rules('brand', 'Brand', 'required|in_list[Radeon,Nvidia,Intel]');
 
-        $this->form_validation->set_rules('price', 'Price', 'numeric');
+        $this->form_validation->set_rules('price', 'Price', 'required|numeric');
 
-        $this->form_validation->set_rules('release_date', 'Release Date', '');
+        $this->form_validation->set_rules('release_date', 'Release Date', 'required');
 
         // Convert numeric fields to int
         if(isset($data['price'])) {
