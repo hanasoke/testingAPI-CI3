@@ -64,6 +64,51 @@ class Vga_cards extends CI_Controller {
             }
         }
 
+        // Delete vga_card (existing_code)
+        elseif ($method === 'delete') {
+            // Check if vga_card exists
+            $vga_card = $this->db->get_where('vga_cards', ['id_card' => $id])->row();
+
+            if (!$vga_card) {
+                $this->output 
+                    ->set_status_header(404)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => 'Vga Card not found']));
+                return;
+            }
+
+            // Delete the vga_card
+            $this->db->where('id_card', $id);
+            $this->db->delete('vga_cards');
+
+            // Check for database errors 
+            if($this->db->affected_rows() == 0) {
+                $this->output 
+                    ->set_status_header(500)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => 'Failed to delete a vga_card']));
+                return;
+            }
+
+            // Success response
+            $this->output
+                ->set_status_header(200)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['message' => 'Motorcycle deleted successfully']));
+        }
+
+         // Handle Invalid methods
+        else {
+            $this->output 
+                ->set_status_header(405)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['error' => 'Method Not Allowed']));
+        }
+    }
+
+    // Example: Create a new vga_card
+    public function add_vgacard() {
+        
     }
 
     
