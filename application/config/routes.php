@@ -53,9 +53,9 @@ $route['default_controller'] = 'welcome';
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
 
-$route['api/users'] = 'api/users'; // Get all users
-$route['api/user/(:num)'] = 'api/user/$1'; // Handle GET/PUT/PATCH here
-$route['api/create_user'] = 'api/create_user'; // POST create user
+$route['users'] = 'api/api/users'; // Get all users
+$route['user/(:num)'] = 'api/api/user/$1'; // Handle GET/PUT/PATCH here
+$route['create_user'] = 'api/api/create_user'; // POST create user
 
 $route['car/cars'] = 'car/cars'; // Get all cars
 $route['car/car/(:num)'] = 'car/car/$1'; // Handle GET/PUT/PATCH here
@@ -69,3 +69,10 @@ $route['motorcycles'] = 'motorcycle/all';
 $route['motorcycle/(:num)'] = 'motorcycle/detail/$1';
 $route['motorcycle/add'] = 'motorcycle/add_motorcycle';
 
+$route['vga_cards'] = 'api/vga_cards/all'; 
+
+// Handle GET/PUT/PATCH here
+$route['vga_card/(:num)'] = 'api/vga_cards/detail/$1';
+
+// POST create vga_card
+$route['vga_card/add_vgacard'] = 'api/vga_cards/add_vgacard';
