@@ -49,6 +49,21 @@ class Vga_cards extends CI_Controller {
                     ->set_output(json_encode(['error' => 'Vga Card not found']));
             }
         }
+
+        // PUT/PATCH: Update Vga Card
+        elseif ($method === 'put' || $method === 'patch') {
+            $json_input = file_get_contents('php://input');
+
+            // Check if input is empty
+            if (empty($json_input)) {
+                $this->output 
+                    ->set_status_header(400)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => 'Empty request body']));
+                return;
+            }
+        }
+
     }
 
     
