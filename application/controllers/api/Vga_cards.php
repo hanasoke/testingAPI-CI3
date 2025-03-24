@@ -53,16 +53,53 @@ class Vga_cards extends CI_Controller {
 
         // PUT/PATCH: Update Vga Card
         elseif ($method === 'put' || $method === 'patch') {
-            $json_input = file_get_contents('php://input');
+            // Load upload library 
+            $this->load->library('upload');
 
-            // Check if input is empty
-            if (empty($json_input)) {
+
+            // Get existing card data
+            $existing_card = $this->db->get_where('vga_cards', ['id_card' => $id])-row();
+
+            if (!$existing_card) {
                 $this->output 
-                    ->set_status_header(400)
+                    ->set_status_header(404)
                     ->set_content_type('application/json')
-                    ->set_output(json_encode(['error' => 'Empty request body']));
+                    ->set_output(json_encode(['error' => 'Vga Card not found']));
                 return;
             }
+
+            // Handle form-data (for file upload)
+            if(!empty($_FILES['photo']['name'])) {
+                // Configure upload 
+                $config['upload_path'] = '/public/img/vga_cards/';
+
+                $config['allowed_types'] = 'jpg|jpeg|png';
+
+                $config['max_size'] = 2048; //2MB
+                $config['file_name'] = uniqid();
+
+                $this->upload->initialize($config);
+
+                if (!$this->upload->do_upload('photo')) {
+                    $this->output 
+                        ->set_status_header(400)
+                        ->set_content_type('application/json')
+                        ->set_output(json_encode(['error' => $this->upload->display_errors()]));
+                    return;
+                }
+
+                $upload_data = $this->upload->data();
+                $photo = $upload_data['file_name'];
+
+                // Delete old photo if exists
+                if(!empty($existing_card->photo) && file_exists('./public/img/vga_cards/'. $existing_card->photo)) {
+                    unlink('./uploads/'.$existing_card->photo);
+                }
+            }
+
+
+
+
         }
 
         // Delete vga_card (existing_code)
