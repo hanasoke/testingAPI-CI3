@@ -71,8 +71,11 @@ $route['motorcycle/add'] = 'motorcycle/add_motorcycle';
 
 $route['vga_cards'] = 'api/vga_cards/all'; 
 
-// Handle GET/PUT/PATCH here
+// Handle GET/DELETE here
 $route['vga_card/(:num)'] = 'api/vga_cards/detail/$1';
+
+// Handle PUT/PATCH here
+$route['vga_card/update/(:num)'] = 'api/vga_cards/update_vgacard/$1';
 
 // POST create vga_card
 $route['vga_card/add_vgacard'] = 'api/vga_cards/add_vgacard';

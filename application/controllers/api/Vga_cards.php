@@ -28,12 +28,6 @@ class Vga_cards extends CI_Controller {
     // Example: Get a single vga_card by ID
     public function detail($id) {
 
-        // Create a DateTime object with the GMT+7 timezone
-        $date = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
-
-        // Format the date and time
-        $update_date = $date->format('Y-m-d H:i:s');
-
         $method = $this->input->method(); // Get HTTP method (get, put, patch, delete)
 
         // Get: Vga Card
@@ -50,163 +44,6 @@ class Vga_cards extends CI_Controller {
                     ->set_output(json_encode(['error' => 'Vga Card not found']));
             }
         }
-
-        // PUT/PATCH: Update Vga Card
-        elseif ($method === 'put' || $method === 'patch') {
-    
-            // Debug received data
-            error_log('Request Method: ' . $method);
-            error_log('$_POST: ' . print_r($_POST, true));
-            error_log('$_FILES: ' . print_r($_FILES, true));
-            error_log('Content-Type: ' . ($_SERVER['CONTENT_TYPE'] ?? 'Not set'));
-
-            // Get existing card
-            $existing_card = $this->db->get_where('vga_cards', ['id_card' => $id])->row();
-            if (!$existing_card) {
-                $this->output->set_status_header(404)
-                    ->set_content_type('application/json')
-                    ->set_output(json_encode(['error' => 'Vga Card not found']));
-                return;
-            }
-
-            // Initialize variables
-            $photo = $existing_card->photo;
-    
-            // Handle form-data for PUT/PATCH
-            $input = [];
-            if (strpos($this->input->server('CONTENT_TYPE'), 'multipart/form-data') !== false) {
-                // For PUT/PATCH form-data, we need to manually parse the input
-                $putdata = fopen("php://input", "r");
-                $raw_data = '';
-                while ($chunk = fread($putdata, 1024)) {
-                    $raw_data .= $chunk;
-                }
-                
-                fclose($putdata);
-        
-                // Parse the raw data to get form fields
-                $boundary = substr($raw_data, 0, strpos($raw_data, "\r\n"));
-                $parts = array_slice(explode($boundary, $raw_data), 1);
-        
-                foreach ($parts as $part) {
-                    if ($part == "--\r\n") break;
-            
-                    $part = ltrim($part, "\r\n");
-                    list($raw_headers, $body) = explode("\r\n\r\n", $part, 2);            
-                    $raw_headers = explode("\r\n", $raw_headers);
-                    $headers = array();
-            
-                    foreach ($raw_headers as $header) {
-                        list($name, $value) = explode(':', $header);
-                        $headers[strtolower($name)] = ltrim($value, ' ');
-                    }
-            
-            
-                    if (isset($headers['content-disposition'])) {
-                        $filename = null;
-                        preg_match(
-                            '/^(.+); *name="([^"]+)"(; *filename="([^"]+)")?/', 
-                            $headers['content-disposition'], 
-                            $matches
-                        );
-                        $name = $matches[2];
-                
-                        if (isset($matches[4])) {
-                            // File upload
-                            $filename = $matches[4];
-                            // File data is already in $_FILES
-                        } else {
-                            // Regular field
-                            $input[$name] = substr($body, 0, strlen($body) - 2);
-                        }
-                    }
-                }
-            } else {
-                // Handle raw JSON input
-                $json_input = file_get_contents('php://input');
-                $input = json_decode($json_input, true);
-            }
-
-            // Handle file upload
-            if (!empty($_FILES['photo']['name'])) {
-                $upload_path = './public/img/vga_cards/';
-                if (!is_dir($upload_path)) {
-                    mkdir($upload_path, 0755, true);
-                }
-
-                $config = [
-                    'upload_path' => $upload_path,
-                    'allowed_types' => 'jpg|jpeg|png',
-                    'max_size' => 2048,
-                    'file_name' => uniqid()
-                ];
-
-                $this->upload->initialize($config);
-
-                if (!$this->upload->do_upload('photo')) {
-                    $this->output->set_status_header(400)
-                                ->set_content_type('application/json')
-                                ->set_output(json_encode([
-                                    'error' => 'File upload failed',
-                                    'details' => $this->upload->display_errors()
-                                ]));
-                    return;
-                }
-
-                $upload_data = $this->upload->data();
-                $photo = $upload_data['file_name'];
-
-                // Delete old photo
-                if (!empty($existing_card->photo) && file_exists($upload_path.$existing_card->photo)) {
-                    unlink($upload_path.$existing_card->photo);
-                }
-            }
-
-            // Validate input
-            $this->form_validation->set_data($input);
-            $this->form_validation->set_rules('name', 'Name', 'required|max_length[100]');
-            $this->form_validation->set_rules('brand', 'Brand', 'required|in_list[Radeon,Nvidia,Intel]');
-            $this->form_validation->set_rules('price', 'Price', 'required|numeric');
-            $this->form_validation->set_rules('release_date', 'Release Date', 'required');
-
-            if ($this->form_validation->run() === FALSE) {
-                if (isset($upload_data)) {
-                    unlink($upload_data['full_path']);
-                }
-                $this->output->set_status_header(400)
-                            ->set_content_type('application/json')
-                            ->set_output(json_encode([
-                                'error' => 'Validation failed',
-                                'details' => validation_errors(),
-                                'received_data' => $input
-                            ]));
-                return;
-            }
-
-            // Prepare update data
-            $update_data = [
-                'name' => $input['name'],
-                'brand' => $input['brand'],
-                'price' => $input['price'],
-                'photo' => $photo,
-                'release_date' => $input['release_date'],
-                'updated_date' => $update_date
-            ];
-
-            // Update database
-            $this->db->where('id_card', $id);
-            $this->db->update('vga_cards', $update_data);
-    
-            $this->output->set_status_header(200)
-                ->set_content_type('application/json')
-                ->set_output(json_encode([
-                    'message' => 'VGA Card updated successfully',
-                    'data' => $update_data
-            ]));
-        }
-
-
-    
         // Delete vga_card (existing_code)
         elseif ($method === 'delete') {
             // Check if vga_card exists
@@ -349,6 +186,165 @@ class Vga_cards extends CI_Controller {
             ->set_status_header(201)
             ->set_content_type('application/json')
             ->set_output(json_encode(array('message' => 'VGA Card created successfully')));
+    }
+
+    // PUT/PATCH: Update Vga Card
+    public function update_vgacard($id) {
+
+        // Create a DateTime object with the GMT+7 timezone
+        $date = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+        // Format the date and time
+        $update_date = $date->format('Y-m-d H:i:s');
+        
+        // Get existing card
+        $existing_card = $this->db->get_where('vga_cards', ['id_card' => $id])->row();
+        if (!$existing_card) {
+            $this->output
+                ->set_status_header(404)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['error' => 'Vga Card not found']));
+            return;
+        }
+
+        // Initialize variables
+        $photo = $existing_card->photo;
+        
+        // Handle form-data for PUT/PATCH
+        $input = [];
+
+        $upload_path = './public/img/vga_cards/';
+        if (strpos($this->input->server('CONTENT_TYPE'), 'multipart/form-data') !== false) {
+            $input = $this->input->post();
+            // Handle file upload
+            if (!empty($_FILES['photo']['name'])) {
+                // Ensure directory exists
+                if (!is_dir($upload_path)) {
+                    mkdir($upload_path, 0755, true);
+                }
+
+                // Configure upload settings
+                $config = [
+                    'upload_path' => $upload_path,
+                    'allowed_types' => 'jpg|jpeg|png',
+                    'max_size' => 2048, 
+                    'file_name' => uniqid(),
+                    'overwrite' => false 
+                ];
+    
+                $this->upload->initialize($config);
+                if (!$this->upload->do_upload('photo')) {
+                    return $this->output
+                        ->set_status_header(400)
+                        ->set_content_type('application/json')
+                        ->set_output(json_encode([
+                            'error' => 'File upload failed',
+                            'details' => $this->upload->display_errors()
+                        ]));
+                }
+
+                $upload_data = $this->upload->data();
+                $photo = $upload_data['file_name'];
+            
+                // Delete old photo if exists
+                if (!empty($existing_card->photo)) {
+                    $old_file = $upload_path . $existing_card->photo;
+ 
+                    if(file_exists($old_file)) {
+                        @unlink($old_file);
+                    }
+                }
+            }
+
+            // For PUT/PATCH form-data, we need to manually parse the input
+            $putdata = fopen("php://input", "r");
+            $raw_data = '';
+
+            while ($chunk = fread($putdata, 1024)) {
+                $raw_data .= $chunk;
+            }
+        
+            fclose($putdata);
+        
+            // Parse the raw data to get form fields
+            $boundary = substr($raw_data, 0, strpos($raw_data, "\r\n"));
+            $parts = array_slice(explode($boundary, $raw_data), 1);
+        
+            foreach ($parts as $part) {
+                if ($part == "--\r\n") break;
+    
+                $part = ltrim($part, "\r\n");
+                list($raw_headers, $body) = explode("\r\n\r\n", $part, 2);            
+                $raw_headers = explode("\r\n", $raw_headers);
+                $headers = array();
+    
+                foreach ($raw_headers as $header) {
+                    list($name, $value) = explode(':', $header);
+                    $headers[strtolower($name)] = ltrim($value, ' ');
+                }
+    
+    
+                if (isset($headers['content-disposition'])) {
+                    $filename = null;
+                    preg_match(
+                        '/^(.+); *name="([^"]+)"(; *filename="([^"]+)")?/', 
+                        $headers['content-disposition'], 
+                        $matches
+                    );
+                    $name = $matches[2];
+        
+                    if (isset($matches[4])) {
+                        // File upload
+                        $filename = $matches[4];
+                        // File data is already in $_FILES
+                    } else {
+                        // Regular field
+                        $input[$name] = substr($body, 0, strlen($body) - 2);
+                    }
+                }
+            }
+        } else {
+            // Handle raw JSON input
+            $json_input = file_get_contents('php://input');
+            $input = json_decode($json_input, true);
+        }
+
+        // Validate input
+        $this->form_validation->set_data($input);
+        $this->form_validation->set_rules('name', 'Name', 'required|max_length[100]');
+        $this->form_validation->set_rules('brand', 'Brand', 'required|in_list[Radeon,Nvidia,Intel]');
+        $this->form_validation->set_rules('price', 'Price', 'required|numeric');
+        $this->form_validation->set_rules('release_date', 'Release Date', 'required');
+        if ($this->form_validation->run() === FALSE) {
+            if (isset($upload_data)) {
+                unlink($upload_data['full_path']);
+            }
+            $this->output->set_status_header(400)
+                        ->set_content_type('application/json')
+                        ->set_output(json_encode([
+                            'error' => 'Validation failed',
+                            'details' => validation_errors(),
+                            'received_data' => $input
+                        ]));
+            return;
+        }
+        // Prepare update data
+        $update_data = [
+            'name' => $input['name'],
+            'brand' => $input['brand'],
+            'price' => $input['price'],
+            'photo' => $photo,
+            'release_date' => $input['release_date'],
+            'updated_date' => $update_date
+        ];
+        // Update database
+        $this->db->where('id_card', $id);
+        $this->db->update('vga_cards', $update_data);
+        $this->output->set_status_header(200)
+            ->set_content_type('application/json')
+            ->set_output(json_encode([
+                'message' => 'VGA Card updated successfully',
+                'data' => $update_data
+            ]));
     }
 }
 
