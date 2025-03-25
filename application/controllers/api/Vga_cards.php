@@ -71,7 +71,6 @@ class Vga_cards extends CI_Controller {
 
             // Initialize variables
             $photo = $existing_card->photo;
-            $update_date = date('Y-m-d H:i:s');
     
             // Handle form-data for PUT/PATCH
             $input = [];
