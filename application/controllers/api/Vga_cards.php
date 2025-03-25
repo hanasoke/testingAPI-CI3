@@ -221,6 +221,12 @@ class Vga_cards extends CI_Controller {
                 return;
             }
 
+            // Delete the photo file if exists
+            $upload_path = './public/img/vga_cards/';
+            if(!empty($vga_card->photo) && file_exists($upload_path.$vga_card->photo)) {
+                unlink($upload_path.$vga_card->photo);
+            }
+
             // Delete the vga_card
             $this->db->where('id_card', $id);
             $this->db->delete('vga_cards');
