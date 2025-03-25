@@ -207,7 +207,7 @@ class Vga_cards extends CI_Controller {
         }
 
 
-
+    
         // Delete vga_card (existing_code)
         elseif ($method === 'delete') {
             // Check if vga_card exists
