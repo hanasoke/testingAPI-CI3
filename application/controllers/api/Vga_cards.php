@@ -188,6 +188,10 @@ class Vga_cards extends CI_Controller {
             ->set_output(json_encode(array('message' => 'VGA Card created successfully')));
     }
 
+    public function adding_vgacard() {
+        
+    }
+
     // PUT/PATCH: Update Vga Card
     public function update_vgacard($id) {
 
