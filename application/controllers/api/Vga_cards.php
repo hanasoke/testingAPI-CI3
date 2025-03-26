@@ -546,6 +546,21 @@ class Vga_cards extends CI_Controller {
                 'data' => $update_data
             ]));
     }
+
+    // Update an applicant
+    public function update($id) {
+        // Read JSON input
+        $json_input = file_get_contents('php://input');
+
+        // Check if input is empty
+        if(empty($json_input)) {
+            $this->output
+                ->set_status_header(400) // Bad Request
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['error' => 'Empty request body']));
+            return;
+        }
+    }
 }
 
 ?>

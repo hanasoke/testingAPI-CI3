@@ -77,6 +77,8 @@ $route['vga_card/(:num)'] = 'api/vga_cards/detail/$1';
 // Handle PUT/PATCH here
 $route['vga_card/update/(:num)'] = 'api/vga_cards/update_vgacard/$1';
 
+$route['vga_card/update_vgacard/(:num)'] = 'api/vga_cards/update/$1';
+
 // POST create vga_card
 $route['vga_card/add_vgacard'] = 'api/vga_cards/add_vgacard';
 $route['vga_card/adding_vgacard'] = 'api/vga_cards/adding_vgacard';
