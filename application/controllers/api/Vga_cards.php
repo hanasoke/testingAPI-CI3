@@ -92,7 +92,7 @@ class Vga_cards extends CI_Controller {
         }
     }
 
-    // Example: Create a new vga_card
+    // Create a new vga_card
     public function add_vgacard() {
         // Create a DateTime object with the GMT+7 timezone
         $date = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
