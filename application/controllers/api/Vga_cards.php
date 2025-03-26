@@ -189,7 +189,190 @@ class Vga_cards extends CI_Controller {
     }
 
     public function adding_vgacard() {
+        // Create a DateTime object with the GMT+7 timezone
+        $date = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+
+        // Format the date and time
+        $created_date = $date->format('Y-m-d H:i:s');
         
+        // Read JSON input
+        $json_input = file_get_contents('php://input');
+        $data = json_decode($json_input, true);
+
+        // Validate JSON input 
+        if(json_last_error() !== JSON_ERROR_NONE || $data === null) {
+            $this->output 
+                ->set_status_header(400)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['error' => 'Invalid JSON input']));
+            return;
+        }
+
+        // Validate input (including uniqueness)
+        $this->form_validation->set_data($data);
+
+        // Validate input (including uniqueness)
+        $this->form_validation->set_rules('name', 'Name', 'required|is_unique[vga_cards.name]');
+        
+        $this->form_validation->set_rules('brand', 'Brand', 'required|in_list[Radeon,Nvidia,Intel]');
+        
+        $this->form_validation->set_rules('price', 'Price', 'required|numeric');
+
+        $this->form_validation->set_rules('release_date', 'Release Date', 'required');
+
+        // Custom error message for duplicate name
+
+        $this->form_validation->set_message('is_unique', 'The %s field must be unique.');
+
+        if($this->form_validation->run() === FALSE) {
+            $this->output 
+                ->set_status_header(400)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(array('error' => validation_errors())));
+            return;
+        }
+        
+        // Handle base64 image
+        $photo = null;
+        if(!empty($data['photo'])) {
+            $upload_path = './public/img/vga_cards/';
+
+            // Ensure directory exists
+            if(!is_dir($upload_path)) {
+                mkdir($upload_path, 0755, true);
+            }
+
+            // Process base64 image
+            $base64_string = $data['photo'];
+
+            // Check if base64 string has data URI prefix
+            if(strpos($base64_string, 'data:') === 0) {
+                $parts = explode(',', $base64_string);
+                $base64_string = $parts[1];
+                $mime_type = explode(';', explode(':', $parts[0])[1])[0];
+
+                // Validate MIME type
+                $allowed_mimes = ['image/jpeg', 'image/jpg', 'image/png'];
+                if (!in_array($mime_type, $allowed_mimes)) {
+                    $this->output 
+                        ->set_status_header(400)
+                        ->set_content_type('application/json')
+                        ->set_output(json_encode([
+                            'error' => 'Invalid image type',
+                            'allowed_types' => 'jpg, jpeg, png'
+                        ]));
+                    return;
+                }
+
+                // Detemine file extension from MIME type
+                $extensions = [
+                    'image/jpeg' => 'jpg',
+                    'image/jpg' => 'jpg',
+                    'image/png' => 'png'
+                ];
+                $extension = $extensions[$mime_type];
+            } else {
+                // If no data URI, assume jpg as fallback
+                $extension = 'jpg';
+            }
+
+            // Decode base64 data
+            $file_data = base64_decode($base64_string);
+
+            // Validate base64 decoding
+            if ($file_data === false) {
+                $this->output 
+                    ->set_status_header(400)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => 'Invalid base64 image data']));
+                return;
+            }
+
+            // Validate image size (2048KB = 2MB)
+            $file_size = strlen($file_data); 
+            if ($file_size > 2048 * 1024 ) {
+                $this->output 
+                    ->set_status_header(400)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'error' => 'Image too large',
+                        'max_size' => '2048KB'
+                    ]));
+                return;
+            }
+
+            // Additional image content validation
+            $image_info = @getimagesizefromstring($file_data);
+            if (!$image_info || !in_array($image_info[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG])) {
+                $this->output 
+                    ->set_status_header(400)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'error' => 'Invalid image content',
+                        'allowed_types' => 'jpg, jpeg, png'
+                    ]));
+                return;
+            }
+
+            // Generate unique filename with proper extension
+            $file_name = uniqid().'.'.$extension;
+            $file_path = $upload_path.$file_name;
+
+            // Save the file 
+            if (file_put_contents($file_path, $file_data)) {
+                $photo = $file_name;
+            } else {
+                $this->output
+                    ->set_status_header(500)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => 'Failed to save image']));
+                return;
+            }
+        } else {
+            $this->output 
+                ->set_status_header(400)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['error' => 'Photo is required']));
+            return;
+        }
+        
+        // Prepare data for insertion
+        $insert_data = [
+            'name' => $data['name'],
+            'brand' => $data['brand'],
+            'price' => $data['price'],
+            'photo' => $photo,
+            'release_date' => $data['release_date'],
+            'created_date' => $created_date,
+            'updated_date' => null
+        ];
+
+        // Insert into database
+        $this->db->insert('vga_cards', $insert_data);
+
+        if ($this->db->error()['code']) {
+            // Clean up uploaded file if database insert fails
+            if($photo && file_exists($upload_path.$photo)) {
+                unlink($upload_path.$photo);
+            }
+            $this->output 
+                ->set_status_header(409)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['error' => 'Name already exists']));
+            return;
+        }
+
+        // Success Response
+        $this->output
+            ->set_status_header(201)
+            ->set_content_type('application/json')
+            ->set_output(json_encode([
+                'message' => 'VGA CARD created successfully',
+                'data' => [
+                    'id' => $this->db->insert_id(),
+                    'photo_url' => base_url('public/img/vga_cards/'.$photo)
+                ]
+            ]));
     }
 
     // PUT/PATCH: Update Vga Card
