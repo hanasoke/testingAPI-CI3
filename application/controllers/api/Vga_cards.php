@@ -100,6 +100,11 @@ class Vga_cards extends CI_Controller {
         // Format the date and time
         $created_date = $date->format('Y-m-d H:i:s');
 
+        // get and convert price first
+        $price = $this->input->post('price');
+        $price = preg_replace('/[^0-9]/', '', $price);
+        $price = (int)$price; 
+
         // Validate input (including uniqueness)
         $this->form_validation->set_rules('name', 'Name', 'required|is_unique[vga_cards.name]');
 
@@ -108,11 +113,6 @@ class Vga_cards extends CI_Controller {
         $this->form_validation->set_rules('price', 'Price', 'required|numeric');
 
         $this->form_validation->set_rules('release_date', 'Release Date', 'required');
-
-        // get and convert price first
-        $price = $this->input->post('price');
-        $price = preg_replace('/[^0-9]/', '', $price);
-        $price = (int)$price; 
 
         // Custom error message for duplicate name
         $this->form_validation->set_message('is_unique', 'The %s field must be unique.');
@@ -161,7 +161,7 @@ class Vga_cards extends CI_Controller {
         $insert_data = [
             'name' => $this->input->post('name'),
             'brand' => $this->input->post('brand'),
-            'price' => $this->input->post('price'),
+            'price' => $price,
             'photo' => $photo, // Store the file name
             'release_date' => $this->input->post('release_date'),
             'created_date' => $created_date,
@@ -322,7 +322,6 @@ class Vga_cards extends CI_Controller {
         $price = preg_replace('/[^0-9]/', '', $price);
         $price = (int)$price; 
 
-
         if ($this->form_validation->run() === FALSE) {
 
             if (isset($upload_data)) {
@@ -339,12 +338,11 @@ class Vga_cards extends CI_Controller {
             return;
         }
 
-
         // Prepare update data
         $update_data = [
             'name' => $input['name'],
             'brand' => $input['brand'],
-            'price' => $price,
+            'price' => $input['price'],
             'photo' => $photo,
             'release_date' => $input['release_date'],
             'updated_date' => $update_date
