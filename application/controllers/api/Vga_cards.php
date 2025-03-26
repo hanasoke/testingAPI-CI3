@@ -109,10 +109,10 @@ class Vga_cards extends CI_Controller {
 
         $this->form_validation->set_rules('release_date', 'Release Date', 'required');
 
-        // Convert numeric fields to int
-        if(isset($data['price'])) {
-            $data['price'] = (int)$data['price'];
-        }
+        // get and convert price first
+        $price = $this->input->post('price');
+        $price = preg_replace('/[^0-9]/', '', $price);
+        $price = (int)$price; 
 
         // Custom error message for duplicate name
         $this->form_validation->set_message('is_unique', 'The %s field must be unique.');
@@ -193,6 +193,7 @@ class Vga_cards extends CI_Controller {
 
         // Create a DateTime object with the GMT+7 timezone
         $date = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+        
         // Format the date and time
         $update_date = $date->format('Y-m-d H:i:s');
         
@@ -213,6 +214,7 @@ class Vga_cards extends CI_Controller {
         $input = [];
 
         $upload_path = './public/img/vga_cards/';
+
         if (strpos($this->input->server('CONTENT_TYPE'), 'multipart/form-data') !== false) {
             $input = $this->input->post();
             // Handle file upload
@@ -314,10 +316,19 @@ class Vga_cards extends CI_Controller {
         $this->form_validation->set_rules('brand', 'Brand', 'required|in_list[Radeon,Nvidia,Intel]');
         $this->form_validation->set_rules('price', 'Price', 'required|numeric');
         $this->form_validation->set_rules('release_date', 'Release Date', 'required');
+
+        // get and convert price first
+        $price = $this->input->post('price');
+        $price = preg_replace('/[^0-9]/', '', $price);
+        $price = (int)$price; 
+
+
         if ($this->form_validation->run() === FALSE) {
+
             if (isset($upload_data)) {
                 unlink($upload_data['full_path']);
             }
+
             $this->output->set_status_header(400)
                         ->set_content_type('application/json')
                         ->set_output(json_encode([
@@ -327,18 +338,22 @@ class Vga_cards extends CI_Controller {
                         ]));
             return;
         }
+
+
         // Prepare update data
         $update_data = [
             'name' => $input['name'],
             'brand' => $input['brand'],
-            'price' => $input['price'],
+            'price' => $price,
             'photo' => $photo,
             'release_date' => $input['release_date'],
             'updated_date' => $update_date
         ];
+
         // Update database
         $this->db->where('id_card', $id);
         $this->db->update('vga_cards', $update_data);
+
         $this->output->set_status_header(200)
             ->set_content_type('application/json')
             ->set_output(json_encode([
