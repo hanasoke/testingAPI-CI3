@@ -199,6 +199,15 @@ class Vga_cards extends CI_Controller {
         $json_input = file_get_contents('php://input');
         $data = json_decode($json_input, true);
 
+        // Check if input is empty 
+        if(empty($json_input)) {
+            $this->output 
+                ->set_status_header(400) // Bad Request
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['error' => 'Empty request body']));
+            return;
+        }
+
         // Validate JSON input 
         if(json_last_error() !== JSON_ERROR_NONE || $data === null) {
             $this->output 
