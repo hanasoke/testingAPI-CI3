@@ -89,6 +89,7 @@ class Vga_cards extends CI_Controller {
                 ->set_status_header(405)
                 ->set_content_type('application/json')
                 ->set_output(json_encode(['error' => 'Method Not Allowed']));
+            return;
         }
     }
 

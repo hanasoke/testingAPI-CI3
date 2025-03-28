@@ -236,7 +236,7 @@ class Motorcycle extends CI_Controller {
             $data['volume'] = (float)$data['volume'];
         }
 
-        // Custom error message for duplicate name
+        // Custom error message for duplicate data
         $this->form_validation->set_message('is_unique', 'The %s field must be unique.');
 
         if($this->form_validation->run() == FALSE) {
