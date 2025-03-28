@@ -44,7 +44,7 @@ class Vga_cards extends CI_Controller {
                     ->set_output(json_encode(['error' => 'Vga Card not found']));
             }
         }
-        // Delete vga_card (existing_code)
+        // Delete vga_card
         elseif ($method === 'delete') {
             // Check if vga_card exists
             $vga_card = $this->db->get_where('vga_cards', ['id_card' => $id])->row();
