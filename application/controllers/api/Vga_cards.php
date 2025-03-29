@@ -230,7 +230,7 @@ class Vga_cards extends CI_Controller {
 
         $this->form_validation->set_rules('release_date', 'Release Date', 'required');
 
-        // Custom error message for duplicate name
+        // Custom error message for duplicate data
 
         $this->form_validation->set_message('is_unique', 'The %s field must be unique.');
 

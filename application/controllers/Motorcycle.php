@@ -205,7 +205,6 @@ class Motorcycle extends CI_Controller {
 
     // Example: Create a new motorcycle
     public function add_motorcycle() {
-
         // Create a DateTime object with the GMT+7 timezone
         $date = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
 
@@ -215,6 +214,24 @@ class Motorcycle extends CI_Controller {
         // Read JSON input
         $json_input = file_get_contents('php://input');
         $data = json_decode($json_input, true);
+
+        // Check if input is empty 
+        if(empty($json_input)) {
+            $this->output 
+                ->set_status_header(400) // Bad Request
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['error' => 'Empty request body']));
+            return;
+        }
+
+        // Validate JSON input 
+        if(json_last_error() !== JSON_ERROR_NONE || $data === null) {
+            $this->output 
+                ->set_status_header(400)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['error' => 'Invalid JSON input']));
+            return;
+        }
 
         // Validate input (including uniqueness)
         $this->form_validation->set_data($data);
