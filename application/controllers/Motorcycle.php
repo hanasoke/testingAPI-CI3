@@ -95,6 +95,14 @@ class Motorcycle extends CI_Controller {
             // Fetch existing car data 
             $existing_motorcycle = $this->db->get_where('motorcycles', ['id_motor' => $id])->row();
 
+             // Check if the vgacard exists
+            if (!$existing_motorcycle) {
+                return $this->output
+                            ->set_status_header(404)
+                            ->set_content_type('application/json')
+                            ->set_output(json_encode(['error' => 'VGA Card not found']));
+            }
+
             // Validate input
             $this->form_validation->set_data($data);
 
