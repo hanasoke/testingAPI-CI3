@@ -100,7 +100,7 @@ class Motorcycle extends CI_Controller {
                 return $this->output
                             ->set_status_header(404)
                             ->set_content_type('application/json')
-                            ->set_output(json_encode(['error' => 'VGA Card not found']));
+                            ->set_output(json_encode(['error' => 'Motorcycle not found']));
             }
 
             // Validate input
