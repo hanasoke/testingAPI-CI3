@@ -76,10 +76,37 @@ class Car extends CI_Controller {
         // PUT/PATCH: Update car
         elseif($method === 'put' || $method === 'patch') {
             $json_input = file_get_contents('php://input');
+
+             // Check if input is empty
+            if(empty($json_input)) {
+                $this->output 
+                    ->set_status_header(400)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => 'Empty request body']));
+                return;
+            }
+
             $data = json_decode($json_input, true);
+
+            // Check if JSON is valid
+            if(json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
+                $this->output 
+                    ->set_status_header(400)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => 'Invalid JSON format']));
+                return;
+            }
 
             // Fetch existing car data 
             $existing_car = $this->db->get_where('cars', ['id' => $id])->row();
+
+            // Check existing motorcycle data
+            if(!$existing_car) {
+                return $this->output 
+                            ->set_status_header(404)
+                            ->set_content_type('application/json')
+                            ->set_output(json_encode(['error' => 'Car not found']));
+            }
 
             // Validate input 
             $this->form_validation->set_data($data);

@@ -92,7 +92,7 @@ class Motorcycle extends CI_Controller {
                 return;
             }
 
-            // Fetch existing car data 
+            // Fetch existing motorcycle data 
             $existing_motorcycle = $this->db->get_where('motorcycles', ['id_motor' => $id])->row();
 
              // Check if the vgacard exists
