@@ -171,6 +171,44 @@ class Psus extends CI_Controller {
                         ->set_output(json_encode(['error' => 'Failed to create PSU']));
         }
     }
+
+    // Helper method to validate and save resume
+    private function validate_and_save_license($base64_string) {
+
+        $upload_path = './public/img/psus/';
+
+        // 1. Check if it's a data URI 
+        if (strpos($base64_string, 'data:') === 0) {
+            
+            $parts = explode(',', $base64_string);
+            $base64_string = $parts[1];
+            $mime_info = explode(';', explode(':', $parts[0])[1]);
+            $mime_type = $mime_info[0];
+
+            // 2. Validate MIME type (PDF or Word)
+            $allowed_mimes = [
+                'application/pdf',
+                'application/msword',
+                'application/text',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            ];
+
+            if(!in_array($mime_type, $allowed_mimes)) {
+                return [
+                    'error' => 'Invalid file type. Only PDF, Word, or TEXT documents are allowed',
+                    'status' => 400
+                ];
+            }
+        } else {
+            // If not a data URI, we'll check the file signature later 
+            $mime_type = null;
+        }
+
+        // 3. Decode base64 data
+        
+
+    }
+
 }
 
 ?>
