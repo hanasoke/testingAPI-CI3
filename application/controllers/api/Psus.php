@@ -222,6 +222,26 @@ class Psus extends CI_Controller {
         }
 
         // 5. Validate file content by checking magic numbers
+        $file_signature = substr($file_data, 0, 4);
+        $pdf_signature = "%PDF";
+        $doc_signature = "\xD0\xCF\x11\xE0"; // DOC file singnature
+        $docx_signature = "PK\x03\x04"; // DOCX file signature (ZIP format)
+
+        $valid_signature = false;
+
+        // Check for PDF
+        if (strcmp($file_signature, $pdf_signature, strlen($pdf_signature)) === 0) {
+            $valid_signature = true;
+            $extension = 'pdf';
+        }
+
+        // Check for DOC
+        elseif (strcmp($file_signature, $doc_signature, strlen($doc_signature)) == 0) {
+            $valid_signature = true;
+            $extension = 'docx';
+        }
+
+
 
     }
 
