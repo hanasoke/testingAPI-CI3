@@ -14,16 +14,6 @@ class Psus extends CI_Controller {
         $this->load->library('upload'); // Load the upload library
     }
 
-    // Example: Get all psus 
-    public function all() {
-        $query = $this->db->get('psus');
-
-        // Return JSON reponse
-        $this->output
-            ->set_content_type('application/json')
-            ->set_output(json_encode($query->result()));
-    }
-
     // Example: Get all response
     public function all() {
         $query = $this->db->get('psus');
@@ -155,10 +145,11 @@ class Psus extends CI_Controller {
                 ->set_status_header(201) // Created
                 ->set_content_type('application/json')
                 ->set_output(json_encode([
-                    'message' => 'Applicant created successfully',
+                    'message' => 'PSU created successfully',
                     'psu_id' => $this->db->insert_id(),
                     'license_url' => base_url('public/img/psus/'. $license_filename)
                 ]));
+            return;
         } else {
             // Clean up uploaded file if database insert fails
             if(isset($license_filename) && file_exists('./public/img/psus/'.$license_filename)) {
@@ -177,9 +168,13 @@ class Psus extends CI_Controller {
 
         $upload_path = './public/img/psus/';
 
+        // Check if it's a data URI
+        $is_data_uri = (strpos($base64_string, 'data:') === 0);
+        $mime_type = null;
+        $extension = null;
+
         // 1. Check if it's a data URI 
-        if (strpos($base64_string, 'data:') === 0) {
-            
+        if ($is_data_uri) {
             $parts = explode(',', $base64_string);
             $base64_string = $parts[1];
             $mime_info = explode(';', explode(':', $parts[0])[1]);
@@ -189,8 +184,9 @@ class Psus extends CI_Controller {
             $allowed_mimes = [
                 'application/pdf',
                 'application/msword',
-                'application/text',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'text/plain', // Added for text files
+                'application/octet-stream' // Fallback for text files
             ];
 
             if(!in_array($mime_type, $allowed_mimes)) {
@@ -199,9 +195,18 @@ class Psus extends CI_Controller {
                     'status' => 400
                 ];
             }
-        } else {
-            // If not a data URI, we'll check the file signature later 
-            $mime_type = null;
+
+            // Set extension based on MIME type
+            $mime_to_extension = [
+                'application/pdf' =>'pdf',
+                'application/msword' => 'doc',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+                'text/plain' => 'txt',
+                'application/octet-stream' => 'txt'
+            ];
+
+            $extension = $mime_to_extension[$mime_type] ?? null;
+            
         }
 
         // 3. Decode base64 data
@@ -227,22 +232,61 @@ class Psus extends CI_Controller {
         $doc_signature = "\xD0\xCF\x11\xE0"; // DOC file singnature
         $docx_signature = "PK\x03\x04"; // DOCX file signature (ZIP format)
 
-        $valid_signature = false;
+        // If extension wasn't set from MIME type, detect it 
+        if (!$extension) {
+            // Check for PDF
+            if (strcmp($file_signature, $pdf_signature, strlen($pdf_signature)) === 0) {
+                $extension = 'pdf';
+            }
+            
+            // Check for DOC
+            elseif (strcmp($file_signature, $doc_signature, strlen($doc_signature)) === 0) {
+                $extension = 'doc';
+            }
+            
+            // Check for DOCX
+            elseif (strcmp($file_signature, $docx_signature, strlen($docx_signature)) === 0) {
+                // Additional check for DOCX
+                if (strpos($file_data, '[Content_Types].xml') !== false) {
+                    $extension = 'docx';
+                }
+            }
 
-        // Check for PDF
-        if (strcmp($file_signature, $pdf_signature, strlen($pdf_signature)) === 0) {
-            $valid_signature = true;
-            $extension = 'pdf';
+            //Check for TXT (no specific signature, but safe to assume if not others)
+            else {
+                $extension = 'txt';
+            }
         }
 
-        // Check for DOC
-        elseif (strcmp($file_signature, $doc_signature, strlen($doc_signature)) == 0) {
-            $valid_signature = true;
-            $extension = 'docx';
+        // Additional validation for text files
+        if ($extension === 'txt') {
+            // Simple check for non-binary content
+            if (preg_match('/[^\x20-\x7E\x0A\x0D]/', $file_data)) {
+                return [
+                    'error' => "Invalid text file content",
+                    'status' => 400
+                ];
+            }
         }
 
+        // 6. Ensure directory exits 
+        if (!is_dir($upload_path)) {
+            mkdir($upload_path, 0755, true);
+        }
 
+        // 7. Generate unique filename
+        $filename = uniqid().'.'.$extension;
+        $file_path = $upload_path.$filename;
 
+        // 8. Save the file 
+        if (!file_put_contents($file_path, $file_data)) {
+            return [
+                'error' => 'Failed to save resume file',
+                'status' => 500
+            ];
+        }
+
+        return ['filename' => $filename];
     }
 
 }
