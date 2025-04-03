@@ -205,7 +205,23 @@ class Psus extends CI_Controller {
         }
 
         // 3. Decode base64 data
-        
+        $file_data = base64_decode($base64_string);
+
+        if ($file_data === false) {
+            return ['error' => 'Invalid base64 data', 'status' => 400];
+        }
+
+        // 4. Check file size (5MB = 5* 1024 * 1024 bytes)
+        $file_size = strlen($file_data);
+
+        if ($file_size > 5242880 ) {
+            return [
+                'error' => 'File too large. Maximum size is 5MB',
+                'status' => 400
+            ];
+        }
+
+        // 5. Validate file content by checking magic numbers
 
     }
 
