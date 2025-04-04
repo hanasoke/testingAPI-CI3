@@ -83,7 +83,13 @@ $route['vga_card/update/(:num)'] = 'api/vga_cards/update/$1';
 $route['vga_card/add_vgacard'] = 'api/vga_cards/add_vgacard';
 $route['vga_card/adding_vgacard'] = 'api/vga_cards/adding_vgacard';
 
+// PSU ROUTES
 $route['psus'] = 'api/psus/all';
 $route['psu/(:num)'] = 'api/psus/detail/$1';
 
+// Delete
+$route['psu/delete/(:num)'] = 'api/psus/delete_psu/$1';
+
+// Add
 $route['psu/add_psu'] = 'api/psus/add_psu';
+

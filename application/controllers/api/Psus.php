@@ -329,7 +329,31 @@ class Psus extends CI_Controller {
 
         $upload_path = './public/img/psus/';
 
-        
+        // Delete the license file if exists
+        if (!empty($existing_psu->license) && file_exists($upload_path.$existing_psu->license)) {
+            unlink($upload_path.$existing_psu->license);
+        }
+
+        // Delete the psu
+        $this->db->where('psu_id', $id);
+        $this->db->delete('psus');
+
+        // Check for database errors
+        if ($this->db->affected_rows() > 0) {
+            $this->output 
+                ->set_status_header(200)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['message' => 'PSU deleted successfully']));
+        } else {
+            $this->output 
+                ->set_status_header(500)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['error'=>'Failed to delete A PSU']));
+        }
+
+
+
+
     }
 
 
