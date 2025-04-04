@@ -235,17 +235,17 @@ class Psus extends CI_Controller {
         // If extension wasn't set from MIME type, detect it 
         if (!$extension) {
             // Check for PDF
-            if (strcmp($file_signature, $pdf_signature, strlen($pdf_signature)) === 0) {
+            if (strncmp($file_signature, $pdf_signature, strlen($pdf_signature)) === 0) {
                 $extension = 'pdf';
             }
             
             // Check for DOC
-            elseif (strcmp($file_signature, $doc_signature, strlen($doc_signature)) === 0) {
+            elseif (strncmp($file_signature, $doc_signature, strlen($doc_signature)) === 0) {
                 $extension = 'doc';
             }
             
             // Check for DOCX
-            elseif (strcmp($file_signature, $docx_signature, strlen($docx_signature)) === 0) {
+            elseif (strncmp($file_signature, $docx_signature, strlen($docx_signature)) === 0) {
                 // Additional check for DOCX
                 if (strpos($file_data, '[Content_Types].xml') !== false) {
                     $extension = 'docx';
