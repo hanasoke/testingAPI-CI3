@@ -358,6 +358,64 @@ class Psus extends CI_Controller {
         $json_input = file_get_contents('php://input');
 
         // Check if input is empty 
+        if(empty($json_input)) {
+            return $this->output 
+                        ->set_status_header(400) // Bad Request
+                        ->set_content_type('application/json')
+                        ->set_output(json_encode(['error' => 'Empty request body']));
+        }
+
+        // Decode JSON input
+        $data = json_decode($json_input, true);
+
+        // check if JSON input 
+        $data = json_decode($json_input, true);
+
+        // Check if JSON input
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
+            $this->output 
+                ->set_status_header(400) // Bad Request
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['error' => 'Invalid JSON format']));
+            return;
+        }
+
+        // Fetch existing applicant data 
+        $existing_psu = $this->db->get_where('psu', ['psu_id' => $id])->row();
+
+        // Check if the psu exists
+        if (!$existing_psu) {
+            return $this->output 
+                        ->set_content_type(404) // Not Found
+                        ->set_content_type('application/json')
+                        ->set_output(json_encode(['error' => 'PSU not found']));
+        }
+
+        // Initialize variables
+        $license_filename = $existing_psu->license;
+        $upload_path = './public/img/psus';
+        $new_license_uploaded = false;
+
+        // Handle license update if provided
+        if (!empty($data['license'])) {
+            $license_result = $this->validate_and_save_license($data['license']);
+
+            if (isset($license_result['error'])) {
+                return $this->output 
+                            ->set_status_header($license_result['status'])
+                            ->set_content_type('application/json')
+                            ->set_output(json_encode(['error' => $license_result['error']]));
+            }
+
+            $license_filename = $license_result['filename'];
+            $new_license_uploaded = true;
+        }
+
+        // Validate input 
+        $this->form_validation->set_data($data);
+
+        
+
 
         
 
