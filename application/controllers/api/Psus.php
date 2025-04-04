@@ -350,9 +350,16 @@ class Psus extends CI_Controller {
                 ->set_content_type('application/json')
                 ->set_output(json_encode(['error'=>'Failed to delete A PSU']));
         }
+    }
 
+    // Update a psu
+    public function update_psu($id) {
+        // Read JSON input
+        $json_input = file_get_contents('php://input');
 
+        // Check if input is empty 
 
+        
 
     }
 
