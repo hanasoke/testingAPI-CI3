@@ -180,6 +180,18 @@ class Psus extends CI_Controller {
             $mime_info = explode(';', explode(':', $parts[0])[1]);
             $mime_type = $mime_info[0];
 
+            $powerpoint_mimes = [
+                'application/vnd.ms-powerpoint',
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation' //.pptx
+            ];
+
+            if (in_array($mime_type, $powerpoint_mimes)) {
+                return [
+                    'error' => 'PowerPoint files (.pptx) are not allowed.',
+                    'status' => 400
+                ];
+            }
+
             // 2. Validate MIME type (PDF or Word)
             $allowed_mimes = [
                 'application/pdf',
@@ -204,21 +216,17 @@ class Psus extends CI_Controller {
                 'text/plain' => 'txt',
                 'application/octet-stream' => 'txt'
             ];
-
             $extension = $mime_to_extension[$mime_type] ?? null;
-            
         }
 
         // 3. Decode base64 data
         $file_data = base64_decode($base64_string);
-
         if ($file_data === false) {
             return ['error' => 'Invalid base64 data', 'status' => 400];
         }
 
         // 4. Check file size (5MB = 5* 1024 * 1024 bytes)
         $file_size = strlen($file_data);
-
         if ($file_size > 5242880 ) {
             return [
                 'error' => 'File too large. Maximum size is 5MB',
@@ -231,6 +239,21 @@ class Psus extends CI_Controller {
         $pdf_signature = "%PDF";
         $doc_signature = "\xD0\xCF\x11\xE0"; // DOC file singnature
         $docx_signature = "PK\x03\x04"; // DOCX file signature (ZIP format)
+        $pptx_signature = "PK\x03\x04"; // PPTX also uses ZIP format
+
+        // Additional check for Power point files 
+
+        if(strncmp($file_signature, $pptx_signature, strlen($pptx_signature)) === 0) {
+            // Check for PowerPoint specific files in the ZIP
+            if (strpos($file_data, 'ppt/') !== false ||
+                strpos($file_data, '[Content_Types].xml') !== false &&
+                strpos($file_data, 'application/vnd.openxmlformats-officedocument.presentationml') !== false) {
+                    return [
+                        'error' => 'PowerPoint files (.pptx) are not allowed',
+                        'status' => 400    
+                    ];
+            }
+        }
 
         // If extension wasn't set from MIME type, detect it 
         if (!$extension) {
@@ -246,8 +269,10 @@ class Psus extends CI_Controller {
             
             // Check for DOCX
             elseif (strncmp($file_signature, $docx_signature, strlen($docx_signature)) === 0) {
-                // Additional check for DOCX
-                if (strpos($file_data, '[Content_Types].xml') !== false) {
+                // Additional check to distinguish DOCX from PPTX
+                if (strpos($file_data, 'word/') !== false ||
+                    (strpos($file_data, '[Content_Types].xml') !== false && 
+                    strpos($file_data, 'application/vnd.openxmlformats-officedocument.wordprocessingml') !== false)) {
                     $extension = 'docx';
                 }
             }
@@ -288,6 +313,26 @@ class Psus extends CI_Controller {
 
         return ['filename' => $filename];
     }
+
+    // Delete a psu
+    public function delete_psu($id) {
+        // Check if the psu exists
+        $existing_psu = $this->db->get_where('psus', ['psu_id' => $id])->row();
+
+        if (!$existing_psu) {
+            $this->output 
+                ->set_status_header(404) // Not Found
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['error' => 'PSU not found']));
+            return;
+        }
+
+        $upload_path = './public/img/psus/';
+
+        
+    }
+
+
 
 }
 
