@@ -381,7 +381,7 @@ class Psus extends CI_Controller {
         }
 
         // Fetch existing applicant data 
-        $existing_psu = $this->db->get_where('psu', ['psu_id' => $id])->row();
+        $existing_psu = $this->db->get_where('psus', ['psu_id' => $id])->row();
 
         // Check if the psu exists
         if (!$existing_psu) {
@@ -414,15 +414,125 @@ class Psus extends CI_Controller {
         // Validate input 
         $this->form_validation->set_data($data);
 
+        // Validate "name" only if it's new
+        if (isset($data['name']) && $data['name'] != $existing_psu->name) {
+            $this->form_validation->set_rules('name', 'Name', 'required|is_unique[psus.name.id.'.$id.']');            
+        }
+
+        // Validate "type" only if it's new
+        if(isset($data['type'])) {
+            $this->form_validation->set_rules('type', 'Type', 'required');
+        }
+
+        // Validate "series" only if it's new
+        if(isset($data['series'])) {
+            $this->form_validation->set_rules('series', 'Series', 'required');
+        }
+
+        // Validate "models" only if it's new
+        if(isset($data['models'])) {
+            $this->form_validation->set_rules('models', 'Models', 'required');
+        }
+
+        // Validate "power" only if it's new
+        if(isset($data['power'])) {
+            $this->form_validation->set_rules('power', 'Power', 'required');
+        }
+
+        // Run Validation
+        if ($this->form_validation->run() == FALSE) {
+            // Clean up uploaded file if validation fails 
+            if ($new_license_uploaded && file_exists($upload_path.$license_filename)) {
+                @unlink($upload_path.$license_filename);
+            }
+
+            $this->output 
+                ->set_status_header(400) // Bad Request
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['error' => validation_errors()]));
+            return;
+        }
+
+        // Prepare data for update
+        $hasChanges = false;
+        $update_data = [];
+
+        if (isset($data['name']) && $data['name'] != $existing_psu->name) {
+            $update_data['name'] = $data['name'];
+            $hasChanges = true;
+        }
+
+        if (isset($data['type']) && $data['type'] != $existing_psu->type) {
+            $update_data['type'] = $data['type'];
+            $hasChanges = true;
+        }
+
+        if (isset($data['series']) && $data['series'] != $existing_psu->series) {
+            $update_data['series'] = $data['series'];
+            $hasChanges = true;
+        }
+
+        if (isset($data['models']) && $data['models'] != $existing_psu->models) {
+            $update_data['models'] = $data['models'];
+            $hasChanges = true;
+        }
+
+        if (isset($data['power']) && $data['power'] != $existing_psu->power) {
+            $update_data['power'] = $data['power'];
+            $hasChanges = true;
+        }
+
+        // Handle resume update
+        if ($new_license_uploaded) {
+            $update_data['license'] = $license_filename;
+            $hasChanges = true;
+        }
+
+        // If no fields have changed, return a response
+        if (!$hasChanges) {
+            
+            // Clean up if new resume was uploaded but no other changes
+            if ($new_license_uploaded && file_exists($upload_path.$license_filename)) {
+                @unlink($upload_path.$license_result);
+            }
+
+            $this->output 
+                ->set_status_header(200)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['message' => 'No Changes detected']));
+            return;
+        }
+
+        // Update the license
+        $this->db->where('psu_id', $id);
+        $this->db->update('psus', $update_data);
         
+        // Check for database errors 
+        if ($this->db->affected_rows() > 0) {
+            // Delete old resume if it was replaced
+            if ($new_license_uploaded && !empty($existing_psu->resume)) {
+                @unlink($upload_path.$existing_psu->license);
+            }
 
+            return $this->output 
+                        ->set_status_header(200)
+                        ->set_content_type('application/json')
+                        ->set_output(json_encode([
+                            'message' => 'PSU updated successfully',
+                            'resume_url' => $new_license_uploaded ? base_url('public/img/'.$license_filename) : null
+                        ]));
+        } else {
+            // Clean up uploaded file if database update fails 
+            if ($new_license_uploaded && file_exists($upload_path.$license_filename)) {
+                @unlink($upload_path.$license_filename);
+            }
 
-        
-
+            return $this->output
+                        ->set_status_header(500)
+                        ->set_content_type('application/json')
+                        ->set_output(json_encode(['message' => 'Failed to update license']));
+        }
     }
-
-
-
 }
 
 ?>
