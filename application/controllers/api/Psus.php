@@ -354,6 +354,13 @@ class Psus extends CI_Controller {
 
     // Update a psu
     public function update_psu($id) {
+
+        // Create a Datetime object with the GMT+7 timezone
+        $date = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+
+        // Format the date and time
+        $updated_date = $date->format('Y-m-d H:i:s');
+
         // Read JSON input
         $json_input = file_get_contents('php://input');
 
@@ -368,9 +375,6 @@ class Psus extends CI_Controller {
         // Decode JSON input
         $data = json_decode($json_input, true);
 
-        // check if JSON input 
-        $data = json_decode($json_input, true);
-
         // Check if JSON input
         if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
             $this->output 
@@ -382,8 +386,6 @@ class Psus extends CI_Controller {
 
         // Fetch existing applicant data 
         $existing_psu = $this->db->get_where('psus', ['psu_id' => $id])->row();
-
-        // Check if the psu exists
         if (!$existing_psu) {
             return $this->output 
                         ->set_content_type(404) // Not Found
@@ -393,13 +395,12 @@ class Psus extends CI_Controller {
 
         // Initialize variables
         $license_filename = $existing_psu->license;
-        $upload_path = './public/img/psus';
+        $upload_path = './public/img/psus/'; // Added trail slash for consistency
         $new_license_uploaded = false;
 
         // Handle license update if provided
         if (!empty($data['license'])) {
             $license_result = $this->validate_and_save_license($data['license']);
-
             if (isset($license_result['error'])) {
                 return $this->output 
                             ->set_status_header($license_result['status'])
@@ -457,45 +458,25 @@ class Psus extends CI_Controller {
         $hasChanges = false;
         $update_data = [];
 
-        if (isset($data['name']) && $data['name'] != $existing_psu->name) {
-            $update_data['name'] = $data['name'];
-            $hasChanges = true;
+        // Check each field for changes
+        $fields_to_check = ['name', 'type', 'series', 'models', 'power'];
+        foreach($fields_to_check as $field) {
+            if (isset($data[$field])) {
+                if ($data[$field] != $existing_psu->$field) {
+                    $update_data[$field] = $data[$field];
+                    $hasChanges = true;
+                }
+            }
         }
 
-        if (isset($data['type']) && $data['type'] != $existing_psu->type) {
-            $update_data['type'] = $data['type'];
-            $hasChanges = true;
-        }
-
-        if (isset($data['series']) && $data['series'] != $existing_psu->series) {
-            $update_data['series'] = $data['series'];
-            $hasChanges = true;
-        }
-
-        if (isset($data['models']) && $data['models'] != $existing_psu->models) {
-            $update_data['models'] = $data['models'];
-            $hasChanges = true;
-        }
-
-        if (isset($data['power']) && $data['power'] != $existing_psu->power) {
-            $update_data['power'] = $data['power'];
-            $hasChanges = true;
-        }
-
-        // Handle resume update
+        // Handle license update 
         if ($new_license_uploaded) {
             $update_data['license'] = $license_filename;
             $hasChanges = true;
         }
 
-        // If no fields have changed, return a response
-        if (!$hasChanges) {
-            
-            // Clean up if new resume was uploaded but no other changes
-            if ($new_license_uploaded && file_exists($upload_path.$license_filename)) {
-                @unlink($upload_path.$license_result);
-            }
-
+        // If no changes except possibly the timestamp
+        if (!$hasChanges && !$new_license_uploaded) {
             $this->output 
                 ->set_status_header(200)
                 ->set_content_type('application/json')
@@ -503,23 +484,41 @@ class Psus extends CI_Controller {
             return;
         }
 
-        // Update the license
-        $this->db->where('psu_id', $id);
-        $this->db->update('psus', $update_data);
-        
-        // Check for database errors 
-        if ($this->db->affected_rows() > 0) {
-            // Delete old resume if it was replaced
-            if ($new_license_uploaded && !empty($existing_psu->resume)) {
+        // Always update the timestamp if we're making changes
+        if ($hasChanges) {
+            $update_data['updated_date'] = $updated_date;
+        }
+
+        // If we have a new license but no other changes, we still want to update
+        if ($new_license_uploaded) {
+            $update_data['updated_date'] = $updated_date;
+            $this->db->where('psu_id', $id);
+            $this->db->update('psus', $update_data);
+                
+            // Delete old license file after successful update
+            if ($this->db->affected_rows() > 0 && !empty($existing_psu->license)) {
                 @unlink($upload_path.$existing_psu->license);
             }
 
-            return $this->output 
+            return $this->output
                         ->set_status_header(200)
                         ->set_content_type('application/json')
                         ->set_output(json_encode([
-                            'message' => 'PSU updated successfully',
-                            'resume_url' => $new_license_uploaded ? base_url('public/img/'.$license_filename) : null
+                            'message' => 'PSU Updated successfully',
+                            'license_url' => $new_license_uploaded ? base_url('public/img/psus/'. $license_filename) : null
+                        ]));
+        }
+
+        // Update the psu data
+        $this->db->where('psu_id', $id);
+        $this->db->update('psus', $update_data);
+
+        if ($this->db->affected_rows() > 0) {
+            return $this->output
+                        ->set_status_header(200)
+                        ->set_content_type('application/json')
+                        ->set_output(json_encode([
+                            'message' => 'PSU updated successfully'
                         ]));
         } else {
             // Clean up uploaded file if database update fails 
@@ -530,7 +529,7 @@ class Psus extends CI_Controller {
             return $this->output
                         ->set_status_header(500)
                         ->set_content_type('application/json')
-                        ->set_output(json_encode(['message' => 'Failed to update license']));
+                        ->set_output(json_encode(['message' => 'Failed to update PSU']));
         }
     }
 }
