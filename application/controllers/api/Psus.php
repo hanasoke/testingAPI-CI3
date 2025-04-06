@@ -26,12 +26,15 @@ class Psus extends CI_Controller {
             } else {
                 $psu->license_url = null;
             }
+
+            // Ensure power is properly formatted (e.g., "850W)
+            $psu->power = $this->formatPower($psu->power);
         }
 
         // Return JSON response
         $this->output 
             ->set_content_type('application/json')
-            ->set_output(json_encode($query->result()));
+            ->set_output(json_encode($psus));
     }
 
     // Get psus by ID
@@ -48,9 +51,12 @@ class Psus extends CI_Controller {
                 $psu->license_url = null;
             }
 
+            // Format power information
+            $psu->power = $this->formatPower($psu->power);
+
             $this->output
                 ->set_content_type('application/json')
-                ->set_output(json_encode($query->result()));
+                ->set_output(json_encode($psu));
         } else {
             $this->output 
                 ->set_status_header(404)
@@ -58,6 +64,16 @@ class Psus extends CI_Controller {
                 ->set_output(json_encode(['error' => 'PSU not found']));
         }
     }
+
+    private function formatPower($power) {
+        // If it's just a number. add W
+        if (is_numeric($power)) {
+            return $power . ' Watt';
+        }
+
+        // Default case - return as is 
+        return $power;
+    } 
     
     // Add a new psu 
     public function add_psu() {
