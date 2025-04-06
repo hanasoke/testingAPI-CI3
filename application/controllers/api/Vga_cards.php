@@ -28,7 +28,7 @@ class Vga_cards extends CI_Controller {
     // Example: Get a single vga_card by ID
     public function detail($id) {
 
-        $method = $this->input->method(); // Get HTTP method (get, put, patch, delete)
+        $method = $this->input->method(); // Get HTTP method (get & delete)
 
         // Get: Vga Card
         if($method === 'get') {
