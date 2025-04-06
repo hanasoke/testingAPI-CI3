@@ -14,9 +14,19 @@ class Psus extends CI_Controller {
         $this->load->library('upload'); // Load the upload library
     }
 
-    // Example: Get all response
+    // Example: Get all responses
     public function all() {
         $query = $this->db->get('psus');
+        $psus = $query->result();
+
+        // Add license URL to each PSU
+        foreach ($psus as $psu) {
+            if (!empty($psu->license)) {
+                $psu->license_url = base_url('public/img/psus/' . $psu->license);
+            } else {
+                $psu->license_url = null;
+            }
+        }
 
         // Return JSON response
         $this->output 
@@ -29,6 +39,15 @@ class Psus extends CI_Controller {
         $query = $this->db->get_where('psus', ['psu_id' => $id]);
 
         if($query->num_rows() > 0) {
+            $psu = $query->row();
+
+            // Add license URL
+            if (!empty($psu->license)) {
+                $psu->license_url = base_url('public/img/psus/' . $psu->license);
+            } else {
+                $psu->license_url = null;
+            }
+
             $this->output
                 ->set_content_type('application/json')
                 ->set_output(json_encode($query->result()));
