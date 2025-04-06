@@ -21,14 +21,7 @@ class Psus extends CI_Controller {
 
         // Add license URL to each PSU
         foreach ($psus as $psu) {
-            if (!empty($psu->license)) {
-                $psu->license_url = base_url('public/img/psus/' . $psu->license);
-            } else {
-                $psu->license_url = null;
-            }
-
-            // Ensure power is properly formatted (e.g., "850W)
-            $psu->power = $this->formatPower($psu->power);
+            $this->formatPsuResponse($psu);
         }
 
         // Return JSON response
@@ -43,16 +36,7 @@ class Psus extends CI_Controller {
 
         if($query->num_rows() > 0) {
             $psu = $query->row();
-
-            // Add license URL
-            if (!empty($psu->license)) {
-                $psu->license_url = base_url('public/img/psus/' . $psu->license);
-            } else {
-                $psu->license_url = null;
-            }
-
-            // Format power information
-            $psu->power = $this->formatPower($psu->power);
+            $this->formatPsuResponse($psu);
 
             $this->output
                 ->set_content_type('application/json')
@@ -65,14 +49,26 @@ class Psus extends CI_Controller {
         }
     }
 
-    private function formatPower($power) {
-        // If it's just a number. add W
-        if (is_numeric($power)) {
-            return $power . ' Watt';
-        }
+    private function formatPsuResponse(&$psu) {
+        // Format license URL 
+        $psu->license_url = !empty($psu->license)
+            ? base_url('public/img/psus/'. $psu->license)
+            : null;
 
-        // Default case - return as is 
-        return $power;
+        // Clean and format power information
+        $psu->power = $this->formatPower($psu->power);
+    }
+
+    private function formatPower($power) {
+        // Remove any existing 'Matt' typos
+        $power = str_replace('Matt', '', $power);
+
+        // Extract numeric value
+        preg_match('/\d+/', $power, $matches);
+        $wattage = $matches[0] ?? '';
+
+        // Return formatted value if we found a number
+        return $wattage ? $wattage . ' Watt' : $power;
     } 
     
     // Add a new psu 
