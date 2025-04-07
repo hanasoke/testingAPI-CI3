@@ -69,15 +69,113 @@ class Cpu extends CI_Controller {
         // Format the date and time
         $created_date = $date->format('Y-m-d H:i:s');
 
-        // get and convert price first 
-        $price = $this->input->post('price');
-        $price = preg_replace('/[^0-9]/', '', $price);
-        $price = (int)$price;
+        // Read JSON input
+        $json_input = file_get_contents('php://input');
+        $data = json_decode($json_input, true);
 
+        // Check if input is empty 
+        if (empty($json_input)) {
+            $this->output 
+                ->set_status_header(400) // Bad Request
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['error' => 'Empty request body']));
+            return;
+        }
+
+        // Validate JSON input
+        if (json_last_error() !== JSON_ERROR_NONE || $data === null) {
+            $this->output 
+                ->set_status_header(400)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['error' => 'Invalid JSON input']));
+            return;
+        }
+
+        // Validate input (including uniqueness)
+        $this->form_validation->set_rules($data);
+        $this->form_validation->set_rules("name", "Name", "required|is_unique[cpus.name]");
+        $this->form_validation->set_rules('brand', 'Brand', 'required');
+        $this->form_validation->set_rules('core', 'Core', 'required|numeric');
+        $this->form_validation->set_rules('thread', 'Thread', 'required|numeric');
+        $this->form_validation->set_rules('serie', 'Serie', 'required');
+        $this->form_validation->set_rules('memory', 'Memory', 'required');
+        $this->form_validation->set_rules('manufacturing_node', 'Manufacture Node', 'required');
+        $this->form_validation->set_rules('integrated_graphic', 'Integrated Graphic', 'required');
+        $this->form_validation->set_rules('boost_clock', 'Boost Clock', 'required');
+        $this->form_validation->set_rules('total_cache', 'Total Cache', 'required');
+
+        // Custom error message for duplicate data
+        $this->form_validation->set_message('is_unique', 'The %s field must be unique.');
+
+        if ($this->form_validation->run() === FALSE) {
+            $this->output 
+                ->set_status_header(400)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(array('error' => validation_errors())));
+            return;
+        }
+
+        // Handle base64 video
+        $video = null;
+        if(!empty($_FILES['video']['name'])) {
+            // Configure upload settings
+            $config['upload_path'] = './public/video/cpus/';
+
+        } else {
+            // If no file is uploaded, return an error
+            $this->output
+                ->set_status_header(400)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(array('error' => 'Video is required')));
+            return;
+        }
+
+        // Prepare data for insertion
+        $insert_data = [
+            'name',
+            'brand',
+            'core',
+            'thread',
+            'serie',
+            'memory',
+            'manufacturing_code',
+            'integrated_graphic',
+            'boost_clock',
+            'total_cache',
+            'video' => $video, 
+            'created_date' => $created_date,
+            'updated_date' => null,
+            'price' => $price
+        ];
+
+        // Insert into database
+        $this->db->insert('cpus', $insert_data);
+
+        // check for database errors (e.g., race condition duplicates)
+        if ($this->db->error()['code']) {
+            // Clean up uploaded file if database insert fails
+            if ($photo && file_exists($upload_path.$photo)) {
+                unlink($upload_path.$photo);
+            }
+            $this->output
+                ->set_status_header(409)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['error' => 'CPU already exists']));
+            return;
+        }
+
+        // Success Response 
+        $this->output
+            ->set_status_header(201)
+            ->set_content_type('application/json')
+            ->set_output(json_encode([
+                'message' => 'CPU created successfully',
+                'data' => [
+                    'id' => $this->db->insert_id(),
+                    'video_url' => base_url('public/video/cpus/'. $video)
+                ]
+            ]));
     }
-
-
-
 }
 
 ?>
