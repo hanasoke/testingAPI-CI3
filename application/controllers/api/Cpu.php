@@ -63,104 +63,94 @@ class Cpu extends CI_Controller {
 
     // Create a new Cpu 
     public function add_cpu() {
-        // Create a DateTime object with the GMT+7 timezone
+        // Set timezone and create date
         $date = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
 
         // Format the date and time
         $created_date = $date->format('Y-m-d H:i:s');
 
-        // Read JSON input
-        $json_input = file_get_contents('php://input');
-        $data = json_decode($json_input, true);
-
-        // Check if input is empty 
+        // Read and Validate JSON input
+        $json_input = file_get_contents('php://input'); 
         if (empty($json_input)) {
-            $this->output 
-                ->set_status_header(400) // Bad Request
+            return $this->output 
+                ->set_status_header(400)
                 ->set_content_type('application/json')
                 ->set_output(json_encode(['error' => 'Empty request body']));
-            return;
+            
         }
 
-        // Validate JSON input
+        $data = json_decode($json_input, true);
         if (json_last_error() !== JSON_ERROR_NONE || $data === null) {
-            $this->output 
+            return $this->output 
                 ->set_status_header(400)
                 ->set_content_type('application/json')
                 ->set_output(json_encode(['error' => 'Invalid JSON input']));
-            return;
         }
 
         // Validate input (including uniqueness)
-        $this->form_validation->set_rules($data);
+        $this->form_validation->set_data($data);
         $this->form_validation->set_rules("name", "Name", "required|is_unique[cpus.name]");
         $this->form_validation->set_rules('brand', 'Brand', 'required');
         $this->form_validation->set_rules('core', 'Core', 'required|numeric');
         $this->form_validation->set_rules('thread', 'Thread', 'required|numeric');
         $this->form_validation->set_rules('serie', 'Serie', 'required');
         $this->form_validation->set_rules('memory', 'Memory', 'required');
-        $this->form_validation->set_rules('manufacturing_node', 'Manufacture Node', 'required');
+        $this->form_validation->set_rules('manufacturing_node', 'Manufacture Node', 'required|numeric');
         $this->form_validation->set_rules('integrated_graphic', 'Integrated Graphic', 'required');
         $this->form_validation->set_rules('boost_clock', 'Boost Clock', 'required');
-        $this->form_validation->set_rules('total_cache', 'Total Cache', 'required');
-        $this->form_validation->set_rules('price', 'Price', 'required');
+        $this->form_validation->set_rules('total_cache', 'Total Cache', 'required|numeric');
+        $this->form_validation->set_rules('price', 'Price', 'required|numeric');
 
         // Custom error message for duplicate data
         $this->form_validation->set_message('is_unique', 'The %s field must be unique.');
 
         if ($this->form_validation->run() === FALSE) {
+            $errors = str_replace(["\n", "\r", "\t"], '', strip_tags(validation_errors()));
             return $this->output 
                 ->set_status_header(400)
                 ->set_content_type('application/json')
-                ->set_output(json_encode(['error' => validation_errors()]));
+                ->set_output(json_encode(['error' => $errors]));
         }
 
         // Handle base64 video
         $video_filename = null;
-        if(!empty($_FILES['video'])) {
-            $video_data = $data['video'];
-
-            // Extract video format and data
-            if (preg_match('/^data:video\/(\w+);base64,/', $video_data, $matches)) {
+        if(!empty($data['video'])) {
+            if (preg_match('/^data:video\/(\w+);base64,/', $data['video'], $matches)) {
                 $video_format = $matches[1];
-                $video_data = substr($video_data, strpos($video_data, ',') + 1);
+                $video_data = substr($data['video'], strpos($data['video'], ',') + 1);
                 $video_data = base64_decode($video_data);
 
                 if ($video_data === false) {
                     return $this->output 
-                                ->set_status_header(400)
-                                ->set_content_type('application/json')
-                                ->set_output(json_encode(['error' => 'Invalid base64 video data']));
+                        ->set_status_header(400)
+                        ->set_content_type('application/json')
+                        ->set_output(json_encode(['error' => 'Invalid base64 video data']));
                 }
 
-                // Generate unique filename
+                // Create directory if it doesn't exist
+                if (!is_dir('./public/video/cpus/')) {
+                    mkdir('./public/video/cpus/', 0777, true);
+                }
+
                 $video_filename = uniqid('cpu_video_') . '.' . $video_format;
 
-                $video_path = './public/video/cpus/' . $video_filename;
+                $video_path = './public/video/cpus' . $video_filename;
 
-                // Save video file
                 if (!file_put_contents($video_path, $video_data)) {
                     return $this->output 
-                                ->set_status_header(500)
-                                ->set_content_type('application/json')
-                                ->set_output(json_encode(['error' => 'Failed to save video file']));
+                            ->set_status_header(500)
+                            ->set_content_type('application/json')
+                            ->set_output(json_encode(['error' => "Failed to save video file"]));
                 }
             } else {
-                return $this->output
-                            ->set_status_header(400)
-                            ->set_content_type('application/json')
-                            ->set_output(json_encode(['error' => 'Invalid video format. Expected base64 encoded video']));
+                return $this->output 
+                    ->set_status_header(400)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => 'Invalid video format. Expected base64 encoded video']));
             }
-
-        } else {
-            $this->output
-                ->set_status_header(400)
-                ->set_content_type('application/json')
-                ->set_output(json_encode(array('error' => 'Video is required as base64')));
-            return;
         }
 
-        // Prepare data for insertion
+        // Preepare data for insertion
         $insert_data = [
             'name' => $data['name'],
             'brand' => $data['brand'],
@@ -168,20 +158,20 @@ class Cpu extends CI_Controller {
             'thread' => $data['thread'],
             'serie' => $data['serie'],
             'memory' => $data['memory'],
-            'manufacturing_code' => $data['manufacturing_node'],
+            'manufacturing_node' => $data['manufacturing_node'],
             'integrated_graphic' => $data['integrated_graphic'],
             'boost_clock' => $data['boost_clock'],
             'total_cache' => $data['total_cache'],
             'video' => $video_filename, 
             'created_date' => $created_date,
             'updated_date' => null,
-            'price' => $price
+            'price' => $data['price']
         ];
 
         // Insert into database
         $this->db->insert('cpus', $insert_data);
 
-        // check for database errors (e.g., race condition duplicates)
+        // check for database errors
         if ($this->db->error()['code']) {
             // Clean up uploaded file if database insert fails
             if ($video_filename && file_exists('./public/video/cpus/' . $video_filename)) {
@@ -201,7 +191,7 @@ class Cpu extends CI_Controller {
                         'message' => 'CPU created successfully',
                         'data' => [
                             'id' => $this->db->insert_id(),
-                            'video_url' => base_url('public/video/cpus/'. $video_filename)
+                            'video_url' => $video_filename ? base_url('public/video/cpus/'. $video_filename) : null
                         ]
             ]));
     }
