@@ -97,3 +97,5 @@ $route['cpus'] = 'api/cpu/all';
 $route['cpu/(:num)'] = 'api/cpu/detail/$1';
 // Add
 $route['cpu/add_cpu'] = 'api/cpu/add_cpu';
+// Edit
+$route['cpu/update_cpu/(:num)'] = 'api/cpu/update_cpu/$1';
