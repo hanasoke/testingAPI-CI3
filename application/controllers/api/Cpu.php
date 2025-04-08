@@ -76,7 +76,6 @@ class Cpu extends CI_Controller {
                 ->set_status_header(400)
                 ->set_content_type('application/json')
                 ->set_output(json_encode(['error' => 'Empty request body']));
-            
         }
 
         $data = json_decode($json_input, true);
@@ -101,6 +100,11 @@ class Cpu extends CI_Controller {
         $this->form_validation->set_rules('total_cache', 'Total Cache', 'required|numeric');
         $this->form_validation->set_rules('price', 'Price', 'required|numeric');
 
+        // Convert numeric fields to int
+        if (isset($data['price'])) {
+            $data['price'] = (int)$data['price'];
+        }
+
         // Custom error message for duplicate data
         $this->form_validation->set_message('is_unique', 'The %s field must be unique.');
 
@@ -112,43 +116,59 @@ class Cpu extends CI_Controller {
                 ->set_output(json_encode(['error' => $errors]));
         }
 
-        // Handle base64 video
+        // Handle base64 video without prefix
         $video_filename = null;
-        if(!empty($data['video'])) {
-            if (preg_match('/^data:video\/(\w+);base64,/', $data['video'], $matches)) {
-                $video_format = $matches[1];
-                $video_data = substr($data['video'], strpos($data['video'], ',') + 1);
-                $video_data = base64_decode($video_data);
+        if (!empty($data['video']) && !empty($data['video_format'])) {
+            $allowed_formats = ['mp4', 'webm', 'ogg'];
+            $allowed_mime_types = ['video/mp4', 'video/webm', 'video/ogg'];
 
-                if ($video_data === false) {
-                    return $this->output 
+            $video_format = strtolower($data['video_format']);
+
+            if (!in_array($video_format, $allowed_formats)) {
+                return $this->output 
                         ->set_status_header(400)
                         ->set_content_type('application/json')
-                        ->set_output(json_encode(['error' => 'Invalid base64 video data']));
-                }
-
-                // Create directory if it doesn't exist
-                if (!is_dir('./public/video/cpus/')) {
-                    mkdir('./public/video/cpus/', 0777, true);
-                }
-
-                $video_filename = uniqid('cpu_video_') . '.' . $video_format;
-
-                $video_path = './public/video/cpus' . $video_filename;
-
-                if (!file_put_contents($video_path, $video_data)) {
-                    return $this->output 
-                            ->set_status_header(500)
-                            ->set_content_type('application/json')
-                            ->set_output(json_encode(['error' => "Failed to save video file"]));
-                }
-            } else {
-                return $this->output 
-                    ->set_status_header(400)
-                    ->set_content_type('application/json')
-                    ->set_output(json_encode(['error' => 'Invalid video format. Expected base64 encoded video']));
+                        ->set_output(json_encode(['error' => 'Invalid or unsupported video format']));
             }
+
+            $video_data = base64_decode($data['video']);
+
+            if ($video_data === false) {
+                return $this->output 
+                            ->set_status_header(400)
+                            ->set_content_type('application/json')
+                            ->set_output(json_encode(['error' => 'Invalid base64 video data']));
+            }
+
+            // Detect MIME type using finfo
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $mime_type = $finfo->buffer($video_data);
+
+            if (!in_array($mime_type, $allowed_mime_types)) {
+                return $this->output 
+                            ->set_status_header(400)
+                            ->set_content_type('application/json')
+                            ->set_output(json_encode([
+                                'error' => 'Uploaded file is not a valid video. Detected MIME: ' . $mime_type
+                            ]));
+            }
+
+            if (!is_dir('./public/video/cpus/')) {
+                mkdir('./public/video/cpus/', 0777, true);
+            }
+            
+            $video_filename = uniqid('cpu_video_'). '.' . $video_format;
+            $video_path = './public/video/cpus/' . $video_filename;
+
+            if (!file_put_contents($video_path, $video_data)) {
+                return $this->output 
+                    ->set_status_header(500)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => "Failed to save video file"]));
+            }
+
         }
+
 
         // Preepare data for insertion
         $insert_data = [
