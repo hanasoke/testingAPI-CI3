@@ -62,7 +62,7 @@ class Cpu extends CI_Controller {
     }
 
     // Create a new Cpu 
-    public function add() {
+    public function add_cpu() {
         // Create a DateTime object with the GMT+7 timezone
         $date = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
 
@@ -103,46 +103,76 @@ class Cpu extends CI_Controller {
         $this->form_validation->set_rules('integrated_graphic', 'Integrated Graphic', 'required');
         $this->form_validation->set_rules('boost_clock', 'Boost Clock', 'required');
         $this->form_validation->set_rules('total_cache', 'Total Cache', 'required');
+        $this->form_validation->set_rules('price', 'Price', 'required');
 
         // Custom error message for duplicate data
         $this->form_validation->set_message('is_unique', 'The %s field must be unique.');
 
         if ($this->form_validation->run() === FALSE) {
-            $this->output 
+            return $this->output 
                 ->set_status_header(400)
                 ->set_content_type('application/json')
-                ->set_output(json_encode(array('error' => validation_errors())));
-            return;
+                ->set_output(json_encode(['error' => validation_errors()]));
         }
 
         // Handle base64 video
-        $video = null;
-        if(!empty($_FILES['video']['name'])) {
-            // Configure upload settings
-            $config['upload_path'] = './public/video/cpus/';
+        $video_filename = null;
+        if(!empty($_FILES['video'])) {
+            $video_data = $data['video'];
+
+            // Extract video format and data
+            if (preg_match('/^data:video\/(\w+);base64,/', $video_data, $matches)) {
+                $video_format = $matches[1];
+                $video_data = substr($video_data, strpos($video_data, ',') + 1);
+                $video_data = base64_decode($video_data);
+
+                if ($video_data === false) {
+                    return $this->output 
+                                ->set_status_header(400)
+                                ->set_content_type('application/json')
+                                ->set_output(json_encode(['error' => 'Invalid base64 video data']));
+                }
+
+                // Generate unique filename
+                $video_filename = uniqid('cpu_video_') . '.' . $video_format;
+
+                $video_path = './public/video/cpus/' . $video_filename;
+
+                // Save video file
+                if (!file_put_contents($video_path, $video_data)) {
+                    return $this->output 
+                                ->set_status_header(500)
+                                ->set_content_type('application/json')
+                                ->set_output(json_encode(['error' => 'Failed to save video file']));
+                }
+            } else {
+                return $this->output
+                            ->set_status_header(400)
+                            ->set_content_type('application/json')
+                            ->set_output(json_encode(['error' => 'Invalid video format. Expected base64 encoded video']));
+            }
 
         } else {
-            // If no file is uploaded, return an error
             $this->output
                 ->set_status_header(400)
                 ->set_content_type('application/json')
-                ->set_output(json_encode(array('error' => 'Video is required')));
+                ->set_output(json_encode(array('error' => 'Video is required as base64')));
             return;
         }
 
         // Prepare data for insertion
         $insert_data = [
-            'name',
-            'brand',
-            'core',
-            'thread',
-            'serie',
-            'memory',
-            'manufacturing_code',
-            'integrated_graphic',
-            'boost_clock',
-            'total_cache',
-            'video' => $video, 
+            'name' => $data['name'],
+            'brand' => $data['brand'],
+            'core' => $data['core'],
+            'thread' => $data['thread'],
+            'serie' => $data['serie'],
+            'memory' => $data['memory'],
+            'manufacturing_code' => $data['manufacturing_node'],
+            'integrated_graphic' => $data['integrated_graphic'],
+            'boost_clock' => $data['boost_clock'],
+            'total_cache' => $data['total_cache'],
+            'video' => $video_filename, 
             'created_date' => $created_date,
             'updated_date' => null,
             'price' => $price
@@ -154,26 +184,25 @@ class Cpu extends CI_Controller {
         // check for database errors (e.g., race condition duplicates)
         if ($this->db->error()['code']) {
             // Clean up uploaded file if database insert fails
-            if ($photo && file_exists($upload_path.$photo)) {
-                unlink($upload_path.$photo);
+            if ($video_filename && file_exists('./public/video/cpus/' . $video_filename)) {
+                unlink('./public/video/cpus/' . $video_filename);
             }
-            $this->output
-                ->set_status_header(409)
-                ->set_content_type('application/json')
-                ->set_output(json_encode(['error' => 'CPU already exists']));
-            return;
+            return $this->output
+                        ->set_status_header(409)
+                        ->set_content_type('application/json')
+                        ->set_output(json_encode(['error' => 'CPU already exists']));
         }
 
         // Success Response 
-        $this->output
-            ->set_status_header(201)
-            ->set_content_type('application/json')
-            ->set_output(json_encode([
-                'message' => 'CPU created successfully',
-                'data' => [
-                    'id' => $this->db->insert_id(),
-                    'video_url' => base_url('public/video/cpus/'. $video)
-                ]
+        return $this->output
+                    ->set_status_header(201)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'message' => 'CPU created successfully',
+                        'data' => [
+                            'id' => $this->db->insert_id(),
+                            'video_url' => base_url('public/video/cpus/'. $video_filename)
+                        ]
             ]));
     }
 }

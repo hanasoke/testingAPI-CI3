@@ -96,4 +96,4 @@ $route['psu/add_psu'] = 'api/psus/add_psu';
 $route['cpus'] = 'api/cpu/all';
 $route['cpu/(:num)'] = 'api/cpu/detail/$1';
 // Add
-$route['cpu/add'] = 'api/cpu/add';
+$route['cpu/add_cpu'] = 'api/cpu/add_cpu';
