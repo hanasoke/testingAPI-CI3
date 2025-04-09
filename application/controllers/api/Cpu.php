@@ -3,13 +3,33 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Cpu extends CI_Controller {
 
+    // Constants for file handling
+    const ALLOWED_VIDEO_MIME_TYPES = [
+        'video/mp4',
+        'video/webm',
+        'video/ogg'
+    ];
+
+    const DENIED_MIME_TYPES = [
+        'image/png', 'image/jpeg', 'image/jpg',
+        
+        'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+
+        'application/vnd.ms-powerpoint', 
+                    
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+
+        'application/vnd.ms-excel', 
+
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ];
+
     public function __construct() {
         parent::__construct();
         // Load any necessary libraries or helpers
         $this->load->helper('url');
-        $this->load->library('form_validation');
+        $this->load->library('form_validation', 'upload');
         $this->load->database();
-        $this->load->library('upload'); // Load the upload library
     }
 
     // Example: Get all Cpus
@@ -217,56 +237,98 @@ class Cpu extends CI_Controller {
 
     // PUT/PATCH: Update CPU
     public function update_cpu($id) {
+        try {
+            //  Start transaction
+            $this->db->trans_start();
 
-        // Create a DateTime object with the GMT+7 timezone
-        $date = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+            // Get current timestamp
+            $updated_date = (new DateTime('now', new DateTimeZone('Asia/Jakarta')))->format('Y-m-d H:i:s');
 
-        // Format the date and time
-        $updated_date = $date->format('Y-m-d H:i:s');
+            // Get and validate input 
+            $json_input = file_get_contents('php://input');
+            $data = $this->validate_input($json_input);
 
-        // 1. Input Validation
-        $json_input = file_get_contents('php://input');
+            // Check if CPU exists
+            $existing_cpu = $this->db->get_where('cpus', ['cpu_id' => $id])->row();
 
-        // Check if input is empty
+            if (!$existing_cpu) {
+                return $this->send_response(404, ['error' => 'CPU not found']);
+            }
+
+            // Process video if present
+            if (!empty($data['video'])) {
+                $data['video'] = $this->process_video($data['video']);
+            }
+
+            // Prepare data for update 
+            $data['updated_date'] = $updated_date;
+            $filtered_data = $this->filter_fields($data);
+
+            // Update database
+            $this->db->where('cpu_id', $id);
+            $this->db->update('cpus', $filtered_data);
+
+            // Complete transaction
+            $this->db->trans_complete();
+
+            if ($this->db->trans_status() === FALSE) {
+                throw new Exception('Database update failed');
+            }
+
+            return $this->send_response(200, ['success' => 'CPU updated successfully']);
+        } catch (Exception $e) {
+            $this->db->trans_rollback();
+            return $this->send_response(500, ['error' => $e->getMessage()]);
+        }
+    }
+
+    private function validate_input($json_input) {
         if (empty($json_input)) {
-            return $this->output 
-                ->set_status_header(400)
-                ->set_content_type('application/json')
-                ->set_output(json_encode(['error' => 'Empty request body']));
+            throw new Exception('Empty request body');
         }
 
-        // Decode JSON input
         $data = json_decode($json_input, true);
- 
-        // Check if JSON input is valid
-        if(json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
-            return $this->output 
-                ->set_status_header(400)
-                ->set_content_type('application/json')
-                ->set_output(json_encode(['error' => 'Invalid JSON format']));
+
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
+            throw new Exception('Invalid JSON format');
         }
 
-        // 2. Fetch existing cpu 
-        $existing_cpu = $this->db->get_where('cpus', ['cpu_id' => $id])->row();
-
-        // Check if the cpu exists
-        if (!$existing_cpu) {
-            $this->output 
-                ->set_status_header(404)
-                ->set_content_type('application/json')
-                ->set_output(json_encode(['error' => 'Vga  not found']));
-            return;
-        }
-
-        // 3. Validate
-        // Form Validate
         $this->form_validation->set_data($data);
+        $this->set_validation_rules();
 
-        $this->form_validation->set_rules('name', 'Name', 'required|max_length[200]');
+        if (!$this->form_validation->run()) {
+            throw new Exception('Validation failed', 400);
+        }
+
+        return $data;
+    }
+
+    private function set_validation_rules($id) {
+        // Get the current name from database
+        $current_cpu = $this->db->select('name')->get_where('cpus', ['cpu_id' => $id])->row();
+
+        $current_name = $current_cpu ? $current_cpu->name : '';
+
+        $this->form_validation->set_rules('name', 'Name', ['required', 
+                'max_length[200]',
+                function($value) use ($current_name) {
+                    // Only check uniqueness if name has changed
+                    if ($value !== $current_name) {
+                        $exists = $this->db->where('name', $value)
+                                        ->get('cpus')
+                                        ->row();
+                        if ($exists) {
+                            $this->form_validation->set_message('name', 'The {field} already exists');
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+            ]);
 
         $this->form_validation->set_rules('brand','Brand', 'required|max_length[50]');
 
-        $this->form_validation->set_rules('core','Core', 'required|integer');
+        $this->form_validation->set_rules('core','Core','required|integer');
 
         $this->form_validation->set_rules('thread','Thread', 'required|integer');
 
@@ -283,91 +345,56 @@ class Cpu extends CI_Controller {
         $this->form_validation->set_rules('total_cache','Total Cache', 'required|integer');
 
         $this->form_validation->set_rules('price','Price', 'required|max_length[200]');
+    }
 
-        if(!$this->form_validation->run()) {
-            return $this->output 
-                ->set_status_header(400)
-                ->set_content_type('application/json')
-                ->set_output(json_encode([
-                    'error' => 'Validation failed',
-                    'details' => $this->form_validation->error_array()
-                ]));
+    private function process_video($video_base64) {
+        if (!preg_match('/^data:(.*);base64,(.*)$/', $video_base64, $matches)) {
+            throw new Exception('Invalid base64 video format');
         }
 
-        // Video Validation
-        if (!empty($data['video'])) {
-            $video_base64 = $data['video'];
+        $mime_type = $matches[1];
+        $base64_data = $matches[2];
 
-            // Separate base64 header and content
-            if (preg_match('/^data:(.*);base64,(.*)$/', $video_base64, $matches)) {
-                $mime_type = $matches[1];
-                $base64_data = $matches[2];
-
-                $allowed_mime_types = [
-                    'video/mp4',
-                    'video/webm',
-                    'video/ogg'
-                ];
-
-                // Deny other types (image, doc, ppt, xls)
-                $denied_mimes = [
-                    'image/png', 'image/jpeg', 'image/jpg',
-                    'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                    'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-                    'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                ];
-
-                if (in_array($mime_type, $denied_mimes)) {
-                    return $this->output 
-                                ->set_status_header(400)
-                                ->set_content_type('application/json')
-                                ->set_output(json_encode(['error' => 'File type not allowed']));
-                }
-
-                if (!in_array($mime_type, $allowed_video_mimes)) {
-                    return $this->output 
-                        ->set_status_header(400)
-                        ->set_content_type('application/json')
-                        ->set_output(json_encode(['error' => 'Only video files are allowed']));
-                }
-
-                // Save the video file
-                $video_data = base64_decode($base64_data);
-                $ext = explode('/', $mime_type)[1]; //e.g. mp4
-                $filename = 'cpu_video_' . time() . '.' . $ext;
-                $filepath = './public/video/cpus/' . $filename;
-
-                file_put_contents($filepath, $video_data);
-
-                // Store the file name in DB
-                $data['video'] = $filename;
-            } else {
-                return $this->output 
-                    ->set_status_header(400)
-                    ->set_content_type('application/json')
-                    ->set_output(json_encode(['error' => 'Invalid base64 video format']));
-            }
+        if (in_array($mime_type, self::DENIED_MIME_TYPES)) {
+            throw new Exception('File type not allowed');
         }
-        
-        // 4. Set updated_date
-        $data['updated_date'] = $updated_date;
 
-        // 5. Whitelist allowed fields
+        if(!in_array($mime_type, self::ALLOWED_VIDEO_MIME_TYPES)) {
+            throw new Exception('Only video files are allowed');
+        }
+
+        $video_data = base64_decode($base64_data);
+        if ($video_data === false) {
+            throw new Exception('Failed to decode base64 video data');
+        }
+
+        $ext = explode('/', $mime_type)[1];
+        $filename = 'cpu_video_' . time() . '.' . $ext;
+        $filepath = './public/video/cpus/' . $filename;
+
+        if (!write_file($filepath, $video_data)) {
+            throw new Exception('Failed to save video file');
+        }
+
+        return $filename;
+    }
+
+    private function filter_fields($data) {
         $allowed_fields = [
             'name', 'brand', 'core', 'thread', 'serie', 'memory', 'manufacturing_node', 'integrated_graphic', 'boost_clock', 'total_cache', 'video', 'price', 'updated_date'
         ];
 
-        $filtered_data = array_intersect_key($data, array_flip($allowed_fields));
+        return array_intersect_key($data, array_flip($allowed_fields));
+    }
 
-        // 6. Update the database
-        $this->db->where('cpu_id', $id);
-        $this->db->update('cpus', $filtered_data);
-
-        // 7. Success Response
-        return $this->output 
-            ->set_status_header(200)
+    private function send_response($status_code, $data) {
+        $this->output 
+            ->set_status_header($status_code)
             ->set_content_type('application/json')
-            ->set_output(json_encode(['success' => 'CPU updated successfully']));
+            ->set_output(json_encode($data));
+
+        // Return the output object for method chaining if needed
+        return $this->output;
     }
 }
 
