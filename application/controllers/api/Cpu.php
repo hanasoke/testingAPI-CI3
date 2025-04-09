@@ -357,31 +357,46 @@ class Cpu extends CI_Controller {
         $this->form_validation->set_rules('price','Price', 'required|max_length[200]');
     }
 
-    private function process_video($video_base64) {
+    private function process_video($video_data) {
         // Check if the video is empty or null
-        if (empty($video_base64) || $video_base64 === "") {
+        if (empty($video_data)) {
             return null;
         }
 
-        if (!preg_match('/^data:video\/([^;]+);base64,(.+)$/', $video_base64, $matches)) {
-            throw new Exception('Invalid video format. Expected: data:video/<format>;base64,<data>');
-        }
+        // If it's a data URI, extract the base64 part
+        if (strpos($video_data, 'data:video/') === 0) {
+            if (!preg_match('/^data:video\/([^;]+);base64,(.+)$/', $video_data, $matches)) {
+                throw new Exception('Invalid video format. Expected: data:video/<format>;base64,<data> or plain base64');
+            }
+            $mime_type = 'video/' . $matches[1];
+            $video_data = $matches[2];
+        } else {
+            // For plain base64, we need to detect the MIME type
+            $decoded = base64_decode($video_data, true);
 
-        $mime_type = 'video/' . $matches[1];
-        $base64_data = $matches[2];
+            if ($decoded === false) {
+                throw new Exception('Invalid base64 data');
+            }
+
+            // Create a temporary file to detect MIME type
+            $tmp_file = tempnam(sys_get_temp_dir(), 'vid');
+            file_put_contents($tmp_file, $decoded);
+            $mime_type = mime_content_type($tmp_file);
+            unlink($tmp_file);
+        }
 
         // Validate MIME type
         if (in_array($mime_type, self::DENIED_MIME_TYPES)) {
-            throw new Exception('File type not allowed');
+            throw new Exception('File type not allowed(images or documents detected)');
         }
 
         if(!in_array($mime_type, self::ALLOWED_VIDEO_MIME_TYPES)) {
             throw new Exception('Only video files are allowed (MP4, WebM, Ogg)');
         }
 
-        // Decode base64
-        $video_data = base64_decode($base64_data);
-        if ($video_data === false) {
+        // Decode base64 if we haven't already
+        $video_binary = isset($decoded) ? $decoded : base64_decode($video_data);
+        if ($video_binary === false) {
             throw new Exception('Failed to decode video data');
         }
 
@@ -391,11 +406,19 @@ class Cpu extends CI_Controller {
             mkdir($upload_path, 0755, true);
         }
 
-        $filename = 'cpu_video_' . time() . '.' . $matches[1];
+        // Detemine extension from MIME type
+        $ext_map = [
+            'video/mp4' => 'mp4',
+            'video/webm' => 'webm',
+            'video/ogg' => 'ogv'
+        ];
+
+        $ext = $ext_map[$mime_type] ?? 'mp4';
+        $filename = 'cpu_video_' . time() . '.' . $ext;
         $filepath = $upload_path . $filename;
 
-        if (!write_file($filepath, $video_data)) {
-            throw new Exception('Failed to save video file');
+        if (!write_file($filepath, $video_binary)) {
+            throw new Exception('Failed to save video file. check directory permissions.');
         }
 
         return $filename;
