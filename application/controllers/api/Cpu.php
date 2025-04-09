@@ -63,12 +63,46 @@ class Cpu extends CI_Controller {
                     ->set_status_header(404)
                     ->set_output(json_encode(['error' => 'Cpu not found']));
             }
-
         }
 
         // Delete cpu 
         elseif ($method === 'delete') {
             // Check if cpu exists
+            $cpu = $this->db->get_where('cpus', ['cpu_id' => $id])->row();
+
+            if(!$cpu) {
+                $this->output 
+                    ->set_status_header(404)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => 'CPU not found']));
+                return;
+            }
+
+            // Delete the video if exists
+            $upload_path = './public/video/cpus/';
+
+            if (!empty($cpu->video) && file_exists($upload_path.$cpu->video)) {
+                unlink($upload_path.$cpu->video);
+            }
+
+            // Delete the cpu
+            $this->db->where('cpu_id', $id);
+            $this->db->delete('cpus');
+
+            // Check for database errors
+            if ($this->db->affected_rows() == 0) {
+                $this->output 
+                    ->set_status_header(500)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => 'Failed to delete a cpu']));
+                return;
+            }
+
+            // Success response
+            $this->output 
+                ->set_status_header(200)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['message' => 'Cpu deleted successfully']));
         }
 
         // Handle Invalid methods
