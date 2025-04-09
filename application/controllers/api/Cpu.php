@@ -336,8 +336,19 @@ class Cpu extends CI_Controller {
             throw new Exception('Invalid JSON format');
         }
 
+        // Get current CPU data
+        $current_cpu = $this->db->get_where('cpus', ['cpu_id' => $id])->row_array();
+
+        // Filter out unchanged fields
+        $changed_data = array_diff_assoc($data, $current_cpu);
+
+        // If nothing changed, return early
+        if (empty($changed_data)) {
+            return $data;
+        }
+
         $this->form_validation->set_data($data);
-        $this->set_validation_rules($id);
+        $this->set_validation_rules($id, $current_cpu);
 
         if (!$this->form_validation->run()) {
             throw new Exception(json_encode($this->form_validation->error_array()));
@@ -346,49 +357,52 @@ class Cpu extends CI_Controller {
         return $data;
     }
 
-    private function set_validation_rules($id) {
-        // Get the current name from database
-        $current_cpu = $this->db->select('name')->get_where('cpus', ['cpu_id' => $id])->row();
-
-        $current_name = $current_cpu ? $current_cpu->name : '';
-
+    private function set_validation_rules($id, $current_data = []) {
+        // Name validation with uniqueness check only if changed
         $this->form_validation->set_rules('name', 'Name', ['required', 
                 'max_length[200]',
-                function($value) use ($current_name, $id) {
-                    // Only check uniqueness if name has changed
-                    if ($value !== $current_name) {
-                        $exists = $this->db->where('name', $value)
-                                        ->where('cpu_id !=', $id)
-                                        ->get('cpus')
-                                        ->row();
-                        if ($exists) {
-                            $this->form_validation->set_message('name', 'The {field} already exists');
-                            return false;
-                        }
+                function($value) use ($current_data, $id) {
+                    // Skip uniqueness check if name hasn't changed
+                    if (isset($current_data['name']) && $value === $current_data['name']) {
+                        return true;
+                    }
+
+                    $exists = $this->db->where('name', $value) 
+                                    ->where('cpu_id !=', $id)
+                                    ->get('cpus')
+                                    ->row();
+                    if ($exists) {
+                        $this->form_validation->set_message('name', 'The {field} already exists');
+                        return false;
                     }
                     return true;
                 }
             ]);
+        
+        // Only validate other fields if they exist in input and have changed
+        $validation_rules = [
+            'brand' => 'required|max_length[50]',
+            'core' => 'required|integer',
+            'thread' => 'required|integer',
+            'serie' => 'required|max_length[100]',
+            'memory' => 'required|max_length[100]',
+            'manufacturing_node' => 'required|integer',
+            'integrated_graphic' => 'required|max_length[200]',
+            'boost_clock' => 'required|numeric',
+            'total_cache' => 'required|integer',
+            'price' => 'required|max_length[200]'
+        ];
 
-        $this->form_validation->set_rules('brand','Brand', 'required|max_length[50]');
+        foreach($validation_rules as $field => $rules) {
 
-        $this->form_validation->set_rules('core','Core','required|integer');
-
-        $this->form_validation->set_rules('thread','Thread', 'required|integer');
-
-        $this->form_validation->set_rules('serie','Serie', 'required|max_length[100]');
-
-        $this->form_validation->set_rules('memory','Memory', 'required|max_length[100]');
-
-        $this->form_validation->set_rules('manufacturing_node','Manufacturing Node', 'required|integer');
-
-        $this->form_validation->set_rules('integrated_graphic','Integrated Graphic', 'required|max_length[200]');
-
-        $this->form_validation->set_rules('boost_clock','Boost Clock', 'required|numeric');
-
-        $this->form_validation->set_rules('total_cache','Total Cache', 'required|integer');
-
-        $this->form_validation->set_rules('price','Price', 'required|max_length[200]');
+            // Skip validation if field hasn't changed
+             if (isset($current_data[$field]) && isset($this->form_validation->validation_data[$field]) && 
+            $current_data[$field] == $this->form_validation->validation_data[$field]) {
+            continue;
+        }
+        
+            $this->form_validation->set_rules($field, ucfirst(str_replace('_', ' ', $field)), $rules);
+        }
     }
 
     private function process_video($video_data) {
