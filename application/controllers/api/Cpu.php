@@ -27,7 +27,7 @@ class Cpu extends CI_Controller {
     public function __construct() {
         parent::__construct();
         // Load any necessary libraries or helpers
-        $this->load->helper('url');
+        $this->load->helper('url', 'file');
         $this->load->library('form_validation', 'upload');
         $this->load->database();
     }
@@ -246,7 +246,7 @@ class Cpu extends CI_Controller {
 
             // Get and validate input 
             $json_input = file_get_contents('php://input');
-            $data = $this->validate_input($json_input);
+            $data = $this->validate_input($json_input, $id);
 
             // Check if CPU exists
             $existing_cpu = $this->db->get_where('cpus', ['cpu_id' => $id])->row();
@@ -255,9 +255,12 @@ class Cpu extends CI_Controller {
                 return $this->send_response(404, ['error' => 'CPU not found']);
             }
 
-            // Process video if present
-            if (!empty($data['video'])) {
+            // Process video if present and valid
+            if (!empty($data['video']) && strpos($data['video'], 'data:video/') === 0) {
                 $data['video'] = $this->process_video($data['video']);
+            } else {
+                // Remove video field if empty or invalid
+                unset($data['video']);
             }
 
             // Prepare data for update 
@@ -275,14 +278,20 @@ class Cpu extends CI_Controller {
                 throw new Exception('Database update failed');
             }
 
-            return $this->send_response(200, ['success' => 'CPU updated successfully']);
+            return $this->send_response(200, [
+                'success' => 'CPU updated successfully',
+                'data' => $filtered_data
+            ]);
         } catch (Exception $e) {
             $this->db->trans_rollback();
-            return $this->send_response(500, ['error' => $e->getMessage()]);
+            return $this->send_response(400, [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString() // Remove in production
+            ]);
         }
     }
 
-    private function validate_input($json_input) {
+    private function validate_input($json_input, $id) {
         if (empty($json_input)) {
             throw new Exception('Empty request body');
         }
@@ -294,10 +303,10 @@ class Cpu extends CI_Controller {
         }
 
         $this->form_validation->set_data($data);
-        $this->set_validation_rules();
+        $this->set_validation_rules($id);
 
         if (!$this->form_validation->run()) {
-            throw new Exception('Validation failed', 400);
+            throw new Exception(json_encode($this->form_validation->error_array()));
         }
 
         return $data;
@@ -311,10 +320,11 @@ class Cpu extends CI_Controller {
 
         $this->form_validation->set_rules('name', 'Name', ['required', 
                 'max_length[200]',
-                function($value) use ($current_name) {
+                function($value) use ($current_name, $id) {
                     // Only check uniqueness if name has changed
                     if ($value !== $current_name) {
                         $exists = $this->db->where('name', $value)
+                                        ->where('cpu_id !=', $id)
                                         ->get('cpus')
                                         ->row();
                         if ($exists) {
@@ -348,29 +358,41 @@ class Cpu extends CI_Controller {
     }
 
     private function process_video($video_base64) {
-        if (!preg_match('/^data:(.*);base64,(.*)$/', $video_base64, $matches)) {
-            throw new Exception('Invalid base64 video format');
+        // Check if the video is empty or null
+        if (empty($video_base64) || $video_base64 === "") {
+            return null;
         }
 
-        $mime_type = $matches[1];
+        if (!preg_match('/^data:video\/([^;]+);base64,(.+)$/', $video_base64, $matches)) {
+            throw new Exception('Invalid video format. Expected: data:video/<format>;base64,<data>');
+        }
+
+        $mime_type = 'video/' . $matches[1];
         $base64_data = $matches[2];
 
+        // Validate MIME type
         if (in_array($mime_type, self::DENIED_MIME_TYPES)) {
             throw new Exception('File type not allowed');
         }
 
         if(!in_array($mime_type, self::ALLOWED_VIDEO_MIME_TYPES)) {
-            throw new Exception('Only video files are allowed');
+            throw new Exception('Only video files are allowed (MP4, WebM, Ogg)');
         }
 
+        // Decode base64
         $video_data = base64_decode($base64_data);
         if ($video_data === false) {
-            throw new Exception('Failed to decode base64 video data');
+            throw new Exception('Failed to decode video data');
         }
 
-        $ext = explode('/', $mime_type)[1];
-        $filename = 'cpu_video_' . time() . '.' . $ext;
-        $filepath = './public/video/cpus/' . $filename;
+        // Create directory if it doesn't exist
+        $upload_path = './public/video/cpus/';
+        if (!is_dir($upload_path)) {
+            mkdir($upload_path, 0755, true);
+        }
+
+        $filename = 'cpu_video_' . time() . '.' . $matches[1];
+        $filepath = $upload_path . $filename;
 
         if (!write_file($filepath, $video_data)) {
             throw new Exception('Failed to save video file');
