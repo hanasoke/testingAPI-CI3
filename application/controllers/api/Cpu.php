@@ -330,22 +330,34 @@ class Cpu extends CI_Controller {
             throw new Exception('Empty request body');
         }
 
-        $data = json_decode($json_input, true);
+        // Clean and validate JSON
+        $json_input = trim($json_input);
+        if ($json_input[0] !== '{') {
+            throw new Exception('Invalid JSON format - must be an object');
+        }
 
+        $data = json_decode($json_input, true);
         if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
-            throw new Exception('Invalid JSON format');
+            throw new Exception("Invalid JSON format: " . json_last_error_msg());
         }
 
         // Get current CPU data
         $current_cpu = $this->db->get_where('cpus', ['cpu_id' => $id])->row_array();
 
-        // Filter out unchanged fields
+        if (!$current_cpu) {
+            throw new Exception('CPU not found');
+        }
+
+        // Remove unchanged fields
         $changed_data = array_diff_assoc($data, $current_cpu);
 
-        // If nothing changed, return early
+        // If nothing changed, return the current data
         if (empty($changed_data)) {
-            return $data;
+            return $current_cpu;
         }
+
+        // Merge with current data to ensure all fields exist
+        $data = array_merge($current_cpu, $data);
 
         $this->form_validation->set_data($data);
         $this->set_validation_rules($id, $current_cpu);
@@ -358,50 +370,90 @@ class Cpu extends CI_Controller {
     }
 
     private function set_validation_rules($id, $current_data = []) {
-        // Name validation with uniqueness check only if changed
-        $this->form_validation->set_rules('name', 'Name', ['required', 
-                'max_length[200]',
-                function($value) use ($current_data, $id) {
-                    // Skip uniqueness check if name hasn't changed
-                    if (isset($current_data['name']) && $value === $current_data['name']) {
-                        return true;
-                    }
+        // Ensure current_data is an array
+        $current_data = is_array($current_data) ? $current_data : [];
 
-                    $exists = $this->db->where('name', $value) 
+        // Name validation with uniqueness check
+        $this->form_validation->set_rules('name', 'Name', [
+            function($value) use ($current_data, $id) {
+                // Skip if name hasn't changed
+                if (isset($current_data['name']) && $value === $current_data['name']) {
+                    return true;
+                }
+
+                // Validate required
+                if (empty($value)) {
+                    $this->form_validation->set_message('name', 'The {field} field is required');
+                    return false;
+                }
+
+                // Validate length
+                if (strlen($value) > 200) {
+                    $this->form_validation->set_message('name', 'The {field} cannot exceed 200 characters');
+                    return false;
+                }
+
+                // Check uniqueness only if changed
+                $exists = $this->db->where('name', $value)
                                     ->where('cpu_id !=', $id)
                                     ->get('cpus')
                                     ->row();
-                    if ($exists) {
-                        $this->form_validation->set_message('name', 'The {field} already exists');
+                return !$exists;
+            }
+        ]);
+        
+        // Define validation rules as arrays
+        $conditional_rules = [
+            'brand' => ['required','max_length[50]'],
+            'core' => ['required','integer'],
+            'thread' => ['required','integer'],
+            'serie' => ['required' ,'max_length[100]'],
+            'memory' => ['required','max_length[100]'],
+            'manufacturing_node' => ['required','integer'],
+            'integrated_graphic' => ['required','max_length[200]'],
+            'boost_clock' => ['required','numeric'],
+            'total_cache' => ['required','integer'],
+            'price' => ['required', 'max_length[200]']
+        ];
+
+        // Add validation for other fields
+        foreach ($conditional_rules as $field => $rules) {
+            $this->form_validation->set_rules($field, ucfirst(str_replace('_', ' ', $field)), [
+                function($value) use ($field, $rules, $current_data) {
+                    // Skip validation if field hasn't changed
+                    if (isset($current_data[$field]) && $value == $current_data[$field]) {
+                        return true;
+                    }
+
+                // Apply all rules
+                foreach ($rules as $rule) {
+                    if ($rule === 'integer' && !filter_var($value, FILTER_VALIDATE_INT)) {
+                        $this->form_validation->set_message($field, 'The {field} must be an integer');
                         return false;
                     }
+                    
+                    if (strpos($rule, 'max_length') === 0) {
+                        $max = (int) str_replace(['max_length[', ']'], '', $rule);
+                        if (strlen($value) > $max) {
+                            $this->form_validation->set_message($field, 'The {field} cannot exceed '.$max.' characters');
+                            return false;
+                        }
+                    }
+                    
+                    if ($rule === 'numeric' && !is_numeric($value)) {
+                        $this->form_validation->set_message($field, 'The {field} must be a number');
+                        return false;
+                    }
+
+                    if ($rule === 'required' && empty($value)) {
+                        $this->form_validation->set_message($field, 'The {field} field is required');
+                        return false;
+                    }
+                }
+
                     return true;
                 }
             ]);
-        
-        // Only validate other fields if they exist in input and have changed
-        $validation_rules = [
-            'brand' => 'required|max_length[50]',
-            'core' => 'required|integer',
-            'thread' => 'required|integer',
-            'serie' => 'required|max_length[100]',
-            'memory' => 'required|max_length[100]',
-            'manufacturing_node' => 'required|integer',
-            'integrated_graphic' => 'required|max_length[200]',
-            'boost_clock' => 'required|numeric',
-            'total_cache' => 'required|integer',
-            'price' => 'required|max_length[200]'
-        ];
-
-        foreach($validation_rules as $field => $rules) {
-
-            // Skip validation if field hasn't changed
-             if (isset($current_data[$field]) && isset($this->form_validation->validation_data[$field]) && 
-            $current_data[$field] == $this->form_validation->validation_data[$field]) {
-            continue;
-        }
-        
-            $this->form_validation->set_rules($field, ucfirst(str_replace('_', ' ', $field)), $rules);
         }
     }
 
