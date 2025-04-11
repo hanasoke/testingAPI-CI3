@@ -425,7 +425,7 @@ class Cpu extends CI_Controller {
             'integrated_graphic' => ['required','max_length[200]'],
             'boost_clock' => ['required','numeric'],
             'total_cache' => ['required','integer'],
-            'price' => ['required', 'max_length[200]']
+            'price' => ['required', 'numeric', 'max_length[200]']
         ];
 
         // Add validation for other fields
