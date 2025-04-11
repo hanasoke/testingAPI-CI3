@@ -289,6 +289,18 @@ class Cpu extends CI_Controller {
                 return $this->send_response(404, ['error' => 'CPU not found']);
             }
 
+            // Check if any data actually changed
+            $current_data = $this->db->get_where('cpus', ['cpu_id'])->row_array();
+            $changed_data = array_diff_assoc($data, $current_data);
+
+            // If nothing changed (except possibility updated_date), return success
+            if (empty($changed_data) || (count($changed_data) === 1 && isset($changed_data['updated_date']))) {
+                return $this->send_response(200, [
+                    'success' => 'No changes detected',
+                    'data' => $current_data
+                ]);
+            }
+
             // Process video if present and valid
             if (!empty($data['video']) && strpos($data['video'], 'data:video/') === 0) {
                 $data['video'] = $this->process_video($data['video']);
@@ -338,7 +350,7 @@ class Cpu extends CI_Controller {
 
         $data = json_decode($json_input, true);
         if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
-            throw new Exception("Invalid JSON format: " . json_last_error_msg());
+            throw new Exception('Invalid JSON format: ' . json_last_error_msg());
         }
 
         // Get current CPU data
