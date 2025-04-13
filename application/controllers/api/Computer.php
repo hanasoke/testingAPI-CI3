@@ -13,7 +13,11 @@ class Computer extends CI_Controller {
 
     // Example: Get all Computer 
     public function all() {
-        
+        // Load the database and query
+        $this->load->database();
+
+         
+
     }
 
 }
