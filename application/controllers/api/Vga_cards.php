@@ -19,6 +19,12 @@ class Vga_cards extends CI_Controller {
         $query = $this->db->get('vga_cards');
         $vga_cards = $query->result();
 
+        // Loop through each vga_card to format the data 
+        foreach($vga_cards as $vga_card) {
+            // Format the data 
+            $vga_card->price = 'Rp ' . number_format($vga_card->price, 0, ',', '.');
+        }
+
         // Return JSON response
         $this->output 
             ->set_content_type('application/json')
