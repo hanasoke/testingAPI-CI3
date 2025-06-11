@@ -36,12 +36,6 @@ class Motorcycle extends CI_Controller {
     // Example: Get a single car by ID
     public function detail($id) {
 
-        // Create a DateTime object with the GMT+7 timezone
-        $date = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
-
-        // Format the date and time
-        $updated_date = $date->format('Y-m-d H:i:s');
-
         $method = $this->input->method(); // Get HTTP method (get, put, patch, delete)
 
         // Get: View motorcycle
@@ -51,11 +45,13 @@ class Motorcycle extends CI_Controller {
             if($motorcycle) {
                 // Format the data
                 $motorcycle->Volume = $motorcycle->volume . ' cc';
-                $motorcycle->Created_date = date('Y-m-d', strtotime(str_replace('/', '-', $motorcycle->created_date)));
+                $motorcycle->Created_date = date('Y-m-d H:i:s', strtotime(str_replace('/', '-', $motorcycle->created_date)));
+                $motorcycle->Updated_date = date('Y-m-d H:i:s', strtotime($motorcycle->updated_date));
 
                 // Remove original fields to avoid duplication
                 unset($motorcycle->volume);
                 unset($motorcycle->created_date);
+                unset($motorcycle->updated_date);
 
                 $this->output 
                     ->set_content_type('application/json')
@@ -147,6 +143,12 @@ class Motorcycle extends CI_Controller {
                     ->set_output(json_encode(['error' => validation_errors()]));
                 return;
             }
+
+            // Add current timestamp to updated_date
+            $date = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+
+            // Format the date and time
+            $data['updated_date'] = $date->format('Y-m-d H:i:s');
 
 
             // Update the provided fields 
