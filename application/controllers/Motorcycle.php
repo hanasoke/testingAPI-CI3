@@ -128,13 +128,16 @@ class Motorcycle extends CI_Controller {
 
             // Validate "machine" if present
             if(isset($data['machine'])) {
-                $this->form_validation->set_rules('machine', 'Machine', 'required');
+                $this->form_validation->set_rules('machine', 'Machine', 'required|numeric');
             }
 
             // Validate "volume" if present
             if(isset($data['volume'])) {
                 $this->form_validation->set_rules('volume', 'Volume', 'required');
             }
+
+            // Convert numeric fields to float
+            if(isset($data['volume'])) $data['volume'] = (float) $data['volume'];
 
             // Run validation
             if($this->form_validation->run() == FALSE) {
@@ -145,22 +148,10 @@ class Motorcycle extends CI_Controller {
                 return;
             }
 
-            // Convert numeric fields to float
-            if(isset($data['volume'])) $data['volume'] = (float) $data['volume'];
-
-            $update_data = [
-                'name' => $data['name'],
-                'brand' => $data['brand'],
-                'color' => $data['color'],
-                'type' => $data['type'],
-                'machine' => $data['machine'],
-                'volume' => $data['volume'],
-                'updated_date' => $updated_date
-            ];
 
             // Update the provided fields 
             $this->db->where('id_motor', $id);
-            $this->db->update('motorcycles', $update_data);
+            $this->db->update('motorcycles', $data);
 
             // Success response
             $this->output 
