@@ -43,15 +43,31 @@ class Api extends CI_Controller {
 
         // PUT/PATCH: Update user
         elseif ($method === 'put' || $method === 'patch') {
-            $this->load->library('form_validation');
             $json_input = file_get_contents('php://input');
             $data = json_decode($json_input, true);
 
             // Fetch existing user data
             $existing_user = $this->db->get_where('users', ['id' => $id])->row();
 
+            // Check existing user data
+            if(!$existing_user) {
+                return $this->output 
+                            ->set_status_header(404)
+                            ->set_content_type('application/json')
+                            ->set_output(json_encode(['error' => 'Car not found']));
+            }
+
             // Validate input
             $this->form_validation->set_data($data);
+
+            // Check if JSON is valid
+            if(json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
+                $this->output 
+                    ->set_status_header(400)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode(['error' => 'Invalid JSON format']));
+                return;
+            }
 
             // Validate "name" only if it's new 
             if (isset($data['name']) && $data['name'] != $existing_user->name ) {
