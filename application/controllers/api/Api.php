@@ -103,15 +103,6 @@ class Api extends CI_Controller {
                 return;
             }
 
-            // Convert numeric fields to integers
-            if(isset($data['age'])) {
-                $data['age'] = (int)$data['age'];
-            }
-
-            if(isset($data['phone'])) {
-                $data['phone'] = (int)$data['phone'];
-            }
-
             // Update the provided fields
             $this->db->where('id', $id);
             $this->db->update('users', $data);
@@ -180,19 +171,11 @@ class Api extends CI_Controller {
 
         $this->form_validation->set_rules('email', 'Email', 'required|valid_email|is_unique[users.email]');
 
-        $this->form_validation->set_rules('age', 'Age', 'required');
+        $this->form_validation->set_rules('age', 'Age', 'required|numeric');
 
         $this->form_validation->set_rules('phone', 'Phone', 'required|numeric|is_unique[users.phone]');
         
         $this->form_validation->set_rules('address', 'Address', 'required');
-
-        // Convert numeric fields to integers
-        if(isset($data['age'])) {
-            $data['age'] = (int)$data['age'];
-        }
-        if(isset($data['phone'])) {
-            $data['phone'] = (int)$data['phone'];
-        }
 
         // Custom error message for duplicate name
         $this->form_validation->set_message('is_unique', 'The %s field must be unique.');
