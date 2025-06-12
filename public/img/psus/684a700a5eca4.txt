@@ -1,0 +1,178 @@
+Terima kasih Mba / Mas .. atas kesempatan memberikan waktu kepada saya untuk memperkenalkan diri
+Perkenalkan, Nama Saya Hanas Bayu Pratama
+Mba / Mas bisa panggil saya Hanas atau Nas
+Umur saya 21 Tahun.
+Saya sekarang berdomisi di Jatiasih, Kota Bekasi
+Pendidikan Saya
+3 tahun yang lalu saya sekolah di SMAN 11 Kota Bekasi. lalu kemudian Saya mengambil jurusan Teknik
+Komputer Diploma Pratama di Politeknik Negeri Jakarta karena mempunyai minat dan ketertarikan 
+tinggi mengenai dunia komputer. Selama Kuliah Jurusan Teknik Komputer di Politeknik Negeri Jakarta. saya 
+belajar mengenai penggunaan Linux dan Internet Security.
+
+Setelah saya lulus sebagai diploma pratama di Politeknik Negeri Jakarta. saya mengambil Jurusan Diploma 2 NIIT di Fakultas Teknik
+Universitas Indonesia dengan Konsentrasi Software Engineerinng dan Jurusan Teknik Informatika di ASIA E University Malaysia. 
+Ilmu yang saya dapatkan ketika saya mempelajari Software Enginnering adalah dimana saya membuat Website dan Aplikasi Android untuk Event Organizer
+dengan User Interface yang baik dan terintegrasi dengan Database Firebase. 
+
+Saya memiliki pengalaman organisasi yaitu ketika saya masih kuliah Diploma Pratama
+di Politeknik Negeri Jakarta. saya mengikuti komunitas Sahabat Pnj.
+Aktifitas saya di komunitas yaitu belajar dasar pemrograman website seperti html, css, Javascript, dan Php.  
+lalu kemudian belajar pertama kali bagaimana menggunakan Framework CSS, yaitu bootstrap dan Library Javascript, yaitu JQuery.
+
+
+Lalu ketika Kuliah Diploma NIIT di Fakultas Teknik Universitas Indonesia 
+saya menjadi mentor Web Developer pada Komunitas Android FTUI dimana saya mengajarkan
+kepada mahasiswa baru bagaimana cara membuat website dari dasar hingga menggunakan laravel.
+
+Untuk Prestasi saya
+pada minggu lalu Saya dan team saya lolos seleksi untuk menjadi peserta hackhaton FIND IT 2020 yang diadakan oleh UGM. pada hari minggu tanggal 23 agustus 2020 saya dan team 
+saya mempresentasikan aplikasi mobile bertema customer service kepada dewan juri. 
+
+Kelebihan dan Kekurangan
+
+Saya senang sekali menggunakan bahasa pemrograman. saya ketika menggunakan bahasa pemrograman untuk membuat project aplikasi atau website bisa benar - benar fokus dan konsisten, 
+saya bahkan bisa 
+berjam - jam untuk menyelesaikan sebuah aplikasi dan website. contohnya, waktu saya masih kuliah, saya pernah disuruh dosen saya untuk menyelesaikan suatu project aplikasi dan website 
+dalam waktu 14 hari.
+saya benar - benar serius mengerjakan project yang diberikan bahkan pernah sehari berusaha untuk memperbaiki error pada project yang saya kerjakan. setelah memberbaiki error 
+yang saya temukan pada project 
+akhirnya saya bisa menyelesaikan dalam waktu 10 hari. kenapa saya bisa lebih cepat. karena saya fokus dan konsisten untuk menyelesaikannya.
+
+Saya Senang bekerja sama dalam menyelesaikan project.
+saya senang bekerja sama karena saya ketika kuliah sudah terbiasa mengerjakan project bersama teman. selain itu pada programn Diploma II NIIT saya lebih banyak praktiknya 
+daripada teori sehingga dalam 1 bulan harus mengerjakan project bersama team.  
+
+Saya teliti dalam mengerjakan Project
+Kenapa saya bisa teliti. karena ketika saya memahami pemrograman dan menemukan programn yang harusnya diisi oleh 10 baris code dalam menjalankan 1 perintah. 
+saya bisa membuatnya menjadi
+7 baris code saja dalam menjalankan 1 perintah karena saya suka sekali prinsip clean code.
+
+Saya Suka Problem Solving.
+Kenapa Suka, karena saya ketika menyelesaikan suatu program. saya tidak hanya bergantung pada satu solusi, melainkan dengan mencari solusi yang lebih efektif dan 
+membandingkannya untuk mendapat solusi yang tepat.
+
+Saya Tipe nya Task Oriented sehingga suka berurusan dengan Object Pekerjaan.
+
+Kekurangan saya
+Saya bicaranya agak gagap, sehingga saya suka ngomong secukupnya dan tidak suka blak-blakan.
+Saya ketika mengerjakan sebuah project, saya suka dianggap gak peka dengan lingkungan sekitar karena ketagihan kalau udah ngoding.
+ 
+
+Untuk ketertarikan saya 
+Saya suka sekali belajar tentang self development atau disebut pengembangan diri. banyak buku self development yang saya sudah baca.
+seperti Berpikir dan Berjiwa Besar karya David J. Schwartz dan Distruption karya Rhenald Kasali.
+Saya suka sekali belajar keuangan, karena menurut saya mengatur keuangan adalah hal yang paling utama dalam hidup ini.
+Saya juga suka mengkuti kelas Online mengenai pemrograman di BuildWith Angga dan belajar pemrograman di Petani Code dan MalasNgoding.
+Lalu saya juga suka membuat project dari hasil mengikuti tutorial di Kelas Online BuildWithAngga dan dari materi perkuliahan
+Saya suka sekali dengan Olahraga, terutama Jogging karena untuk menjadi Programmer pastinya lebih sering duduk dari pada berdiri sehingga tidak baik untuk kesehatan. karena itulah setiap 
+pagi saya selalu menyempatkan jogging dan olahraga ringan dilapangan dekat tempat tinggal agar badan saya bugar dan tidak pegal. 
+saya suka sekali berbagi ilmu dengan menulis sehingga saya membuat artikel di medium yang berisi tutorial. 
+
+Untuk saat ini saya sedang menempung pendidikan secara daring dengan Asia e-University Malaysia setiap hari sabtu. selain itu aktifitas lain saya selain kuliah daring adalah membuat 
+artikel dimedium dan mengasah diri belajar mengenai dunia pemrograman melalui youtube dan website. 
+
+1. Visi dan Misi
+Dari Informasi yang saya dapat, indonesia patisserie school adalah Sekolah yang menawarkan Kursus Untuk pembuatan Kue. yaitu berfokus pada pengembangan kue kering. 
+2. Industri dan Produk
+Sekolah ini bergerak dibidang pendidikan dengan fokus pada Pelatihan pengembangan Kue. Kursus yang ditawarkan sekolah ini mulai dari Basic, Intermediet, Superior, dan Enterpreneur
+
+3. Job Desk dan Posisi 
+   Baik Bu, selain saya melihat informasi mengenai perusahaan. saya juga mencari informasi tentang job desk saya dimana 
+   saya sebagai seorang Front End Engineer akan bertugas untuk membuat tampilan User Interface yang mudah di pahami pengguna dan 
+   memiliki performa cepat. setiap hari saya pastinya akan mengimplementasikan mockup kedalam baris code dan mengetik bahasa pemrograman 
+   untuk membuat tampilan user interface
+   yang bagus bersama team. selain itu, saya nanti juga akan berkolaborasi dengan tim designer UI / UX untuk membuat tampilan yang mudah
+   dipahami oleh pengguna. Sebagai Programmer pastinya memiliki tanggung jawab terhadap sebuah set instruksi dalam sebuah fitur. 
+   fitur ini biasanya dipegang oleh tim produk. tim produk ini biasanya di pimpin oleh seorang manager produk. setiap set intruksi 
+   biasanya akan dimasukkan ke dalam alat kolaborasi, seperti Jira atau Trello. di tools inilah seorang programmer akan melaporkan 
+   sejauh mana pekerjaan yang sudah dilakukan kepada manajer produk. selain itu, biasanya dalam team programmer terdapat seorang 
+   senior programmer untuk memberikan arahan kepada junior programmer dalam mengerjakan project. dari situlah saya akan diarahkan 
+   oleh senior saya dalam mengerjakan project.
+
+4. Kompetitor dan Tantangannya
+   1. Baik Bu, dari hasil research saya, PT stampindo ini ada dalam industri Teknologi CRM dan Pengembangan aplikasi mobile, dimana Industri Teknologi itu mempunyai kompetitor 
+      yang sudah banyak pesaingnya.selain itu, ada Aplikasi CRM kompetitor dalam dan luar negeri. nah disini saya melihat tantangannya apakah 
+      aplikasi CRM buatan PT Stampindo bisa memikat hati lebih banyak ukm dalam mengembangkan bisnisnya baik diluar negeri maupun 
+      dalam negeri. karena sekarang mayoritas pengguna mau serba cepat ketika membuka website maupun aplikasi dan betah berlama lama di aplikasi website maupun mobile
+      tersebut jika User Interfacenya menarik dan informasinya mudah dipahami. dari posisi saya, sebagai seorang Front - End Engineer saya dapat 
+      melihat kontribusi saya mungkin belum sebesar senior saya. tetapi disini saya dapat membantu untuk bagaimana mengimplementasikan Mock Up
+      User Interface ke dalam baris code dengan baik, menangani Error pada pemrograman, dan mendapatkan pengetahuan baru bagaimana membuat program berjalan tanpa error 
+      apabila program yang saya buat masih ada kesalahan.
+
+
+Menjawab Mengapa anda melamar di perusahaan ini
+
+Baik Bu, saya mau melamar di perusahaan ini karena saya dari dulu tertarik dengan bidang teknologi dan saya lihat di perusahaan ini menjual jasa untuk mengembangkan aplikasi 
+mobile dan CRM untuk pengembangan bisnis ukm sehingga 
+Terkait dengan bidang saya, lalu yang kedua adalah di posisi ini, bagian front - end engineer. kenapa saya melamar di posisi ini, karena 
+saya sadar secara pribadi bahwa saya tipikal orang yang
+ketika membuat aplikasi website maupun mobile, suka membuat nya dengan user interface dengan baik. selain itu saya suka sekali dengan problem solving 
+dan berkolaborasi dengan team untuk memecahkan masalah bersama. 
+nah, karena pekerjaan seorang programmer biasanya seperti itu dan saya punya sifat yang cocok dengan Job Spesifikasi yang dari PT Stampindo Tawarkan, itulah mengapa 
+saya mau melamar di posisi ini dan perusahaan ini.
+
+
+Bagaiman anda bekerja dibawah tekanan ?
+Menurut saya bekerja dibawah tekanan adalah hal yang positif, mengapa menjadi hal yang positif, karena dengan bekerja dibawah tekanan dapat membuat saya sadar pekerjaan apa yang 
+menjadi prioritas dan mana yang bukan prioritas 
+sehingga saya akan mengutamakan yang prioritas terlebih dahulu untuk dikerjakan. Bekerja dibawah tekanan membuat saya bekerja cerdas dan efisien untuk memanfaatkan 
+waktu dengan baik sehingga saya dapat mengabaikan gangguan yang dapat menghabat pekerjaan saya.
+Dari pengalaman saya, ketika saya kuliah Diploma II saya selalu disuruh membuat project setiap 1 bulan dan saya selalu dapat mengerjakan project 
+sebelum deadline bersama 
+teman sehingga saya sudah terbiasa dengan 
+deadline. kenapa bisa seperti itu, karena dulu ketika saya mengerjakan project yang menjadi prioritas adalah mengerjakan project nya sehingga saya abaikan gangguan yang dapat membuat lama
+dalam mengerjakan pekerjaan. pada semester akhir kuliah Diploma II saya mengerjakan project yang harusnya selesai dalam 14 hari, justru selesai dalam waktu 10 hari karena saya 
+fokus sekali dalam 
+mengerjakan project sebelum deadline meskipun mengerjakan project sampai jam 1 dini hari. 
+
+Pengalaman Berikutnya, pada saat saya minggu lalu mengikuti lomba Hackhathon Find IT UGM. saya bersama team saya membuat project dalam waktu 2 hari sebelum hari minggu 23 Agustus 2020 
+pukul 06.30. 
+Saya dan team saya rela mengerjakan aplikasi mobile dari pagi sampai jam 12 Malam selama 2 hari demi bisa tampil mempresentasikan aplikasi mobile kepada juri. 
+
+saya juga berpikir bekerja dibawah tekanan bisa mengeluarkan potensi, inisiatif, dan keterampilan saya untuk 
+menyelesaikan pekerjaan tersebut.
+
+Cara Nego Gaji yang Benar
+1. Know your value first
+2. Don't Listen or compare to others
+3. Know the company first
+4. Name the Numbers
+5. Be Careful of your contract
+
+Mau Gaji Berapa 
+1. Tentuan Kerja
+2. Hitung Biaya Hidup
+
+Berdasarkan Informasi yang saya dapat dari situs lowongan kerja dengan job desk yang sama, tanggung jawab yang sama, dan jabatan yang sama. range harga saya sekitar 3.000.000 - 8.000.000.
+dari range tersebut saya memilih gaji sebesar 4 juta karena saya juga butuh untuk mengembangkan skill programming saya melalui kelas online yang harga tertingginya bisa mencapai 
+setengah juta untuk 1 kelas, membayar uang bensin untuk pulang - pergi karena dalam 3 hari dalam seminggu jika menempuh perjalanan yang sama dari rumah ke kantor bensin harus diisi, dan 
+ongkos makan malam saya apabila saya lembur.   
+
+Dari Rencana 5 Tahun Kedepan, Saya bagi menjadi target jangan pendek, menengah, dan panjang.
+Untuk jangka pendek, saya akan berfokus mengerjakan project yang diberikan kepada saya agar 
+saya dapat mengerti bagaimana tanggung jawab seorang junior programmer kepada perusahaan sehingga 
+memahami cara bekerja di perusahaan ini. untuk jangka menengah jika saya di kasih kesempatan naik jabatan
+pastinya saya akan belajar mengurus tim kecil dan juga belajar memimpin dari senior saya. lalu untuk
+jangka panjang jika saya terpilih menjadi seorang senior programmer maka saya dapat membimbing 
+junior programmer dalam pekerjaan dan membantu untuk bekerja sama dengan tim yang lain yang membutuhkan
+bantuan sehingga dapat memberikan dampak positif terhadap perusahaan yang mana perusahaan dapat memberikan 
+dampak positif kepada masyarakat sehingga saya secara tidak langsung memberikan dampak positif bagi masyarakat. 
+
+
+Bu, sekarang kan pemerintah sudah membuat aturan hidup di era new normal pada semua lini 
+kehidupan, seperti bisnis, perdagangan, rekreasi, bersosialisi, dsb. saya mau bertanya, 
+bagaimana pt stampindo ini menerepkan kebijakan pemerintah dalam menerapkan kehidupan new normal
+di kantor, seperti menjaga jarak, menggunakan face-shield, WFH, dsb.
+
+
+Jika nanti saya masuk kedalam tim, akan masuk ke tim siapa dan saya laporan kepada siapa
+
+Bu, Seorang Programmer pastinya bekerja dalam sebuah tim, nah nanti dalam tim ini saya akan 
+berinteraksi dengan siapa, dari lulusan mana, dari etnis mana, dan rata - rata itu job desc nya apa,
+dan saya bisa mengisi job desc yang belum kepegang dibagian mana 
+
+Bu, Bagaimana saya bisa mencapai posisi senior programmer di perusahaan ini, usaha seperti 
+apa yang dibutuhkan, usaha apa saja yang saya harus lakukan, dan bagaimana saya bisa menjaga
+keharmonisan berkolaborasi didalam team agar team work nya harmonis walaupun saya tetap mengejar 
+karir menjadi Seorang Senior Programmer. 
+ 
