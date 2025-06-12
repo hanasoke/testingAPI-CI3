@@ -167,9 +167,17 @@ class Cpu extends CI_Controller {
 
         // Handle base64 video without prefix
         $video_filename = null;
-        if (!empty($data['video']) && !empty($data['video_format'])) {
+        if (!empty($data['video'])) {
             $allowed_formats = ['mp4', 'webm', 'ogg'];
             $allowed_mime_types = ['video/mp4', 'video/webm', 'video/ogg'];
+
+            // Validate video_format if provided 
+            if (empty($data['video_format'])) {
+                return $this->output 
+                        ->set_status_header(400)
+                        ->set_content_type('application/json')
+                        ->set_output(json_encode(['error' => 'Video format is required when uploading video']));
+            }
 
             $video_format = strtolower($data['video_format']);
 
@@ -177,7 +185,7 @@ class Cpu extends CI_Controller {
                 return $this->output 
                         ->set_status_header(400)
                         ->set_content_type('application/json')
-                        ->set_output(json_encode(['error' => 'Invalid or unsupported video format']));
+                        ->set_output(json_encode(['error' => 'Invalid video format. Allowed: mp4, webm, ogg']));
             }
 
             $video_data = base64_decode($data['video']);
@@ -231,6 +239,7 @@ class Cpu extends CI_Controller {
             'boost_clock' => $data['boost_clock'],
             'total_cache' => $data['total_cache'],
             'video' => $video_filename, 
+            'video_format' => $video_format,
             'created_date' => $created_date,
             'updated_date' => null,
             'price' => $data['price']
@@ -297,11 +306,19 @@ class Cpu extends CI_Controller {
             }
 
             // Process video if present and valid
-            if (!empty($data['video']) && strpos($data['video'], 'data:video/') === 0) {
-                $data['video'] = $this->process_video($data['video']);
+            if (!empty($data['video'])) {
+                if (!empty($data['video_format'])) {
+                    throw new Exception("Video format is required when updating video");
+                }
+
+                $filename = $this->process_video($data['video'], $data['video_format']);
+                $data['video'] = $filename;
+                $data['video_format'] = strtolower($data['video_format']);
             } else {
-                // Remove video field if empty or invalid
-                unset($data['video']);
+                // Keep existing video if not updating 
+                $existing_cpu = $this->db->get_where('cpus', ['cpu_id', $id])->row();
+                $data['video'] = $existing_cpu->video;
+                $data['video_format'] = $existing_cpu->video_format;
             }
 
             // Prepare data for update 
