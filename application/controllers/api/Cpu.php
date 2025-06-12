@@ -11,16 +11,11 @@ class Cpu extends CI_Controller {
     ];
 
     const DENIED_MIME_TYPES = [
-        'image/png', 'image/jpeg', 'image/jpg',
-        
+        'image/png', 'image/jpeg', 'image/jpg',        
         'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-
         'application/vnd.ms-powerpoint', 
-                    
         'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-
         'application/vnd.ms-excel', 
-
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     ];
 
