@@ -549,6 +549,7 @@ class Cpu extends CI_Controller {
             throw new Exception('File type not allowed(images or documents detected)');
         }
 
+        // Validates MIME type matches format
         if (!in_array($mime_type, self::ALLOWED_VIDEO_MIME_TYPES)) {
             throw new Exception('Only video files are allowed (MP4, WebM, Ogg)');
         }
