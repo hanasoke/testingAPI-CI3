@@ -167,6 +167,7 @@ class Cpu extends CI_Controller {
 
         // Handle base64 video without prefix
         $video_filename = null;
+        $video_format = null;
         if (!empty($data['video'])) {
             $allowed_formats = ['mp4', 'webm', 'ogg'];
             $allowed_mime_types = ['video/mp4', 'video/webm', 'video/ogg'];
@@ -223,10 +224,9 @@ class Cpu extends CI_Controller {
                     ->set_content_type('application/json')
                     ->set_output(json_encode(['error' => "Failed to save video file"]));
             }
-
         }
 
-        // Preepare data for insertion
+        // Prepare data for insertion
         $insert_data = [
             'name' => $data['name'],
             'brand' => $data['brand'],
@@ -276,7 +276,7 @@ class Cpu extends CI_Controller {
     // PUT/PATCH: Update CPU
     public function update_cpu($id) {
         try {
-            //  Start transaction
+            // Start transaction
             $this->db->trans_start();
 
             // Get current timestamp
@@ -294,7 +294,7 @@ class Cpu extends CI_Controller {
             }
 
             // Check if any data actually changed
-            $current_data = $this->db->get_where('cpus', ['cpu_id'])->row_array();
+            $current_data = $this->db->get_where('cpus', ['cpu_id' => $id])->row_array();
             $changed_data = array_diff_assoc($data, $current_data);
 
             // If nothing changed (except possibility updated_date), return success
@@ -316,7 +316,6 @@ class Cpu extends CI_Controller {
                 $data['video_format'] = strtolower($data['video_format']);
             } else {
                 // Keep existing video if not updating 
-                $existing_cpu = $this->db->get_where('cpus', ['cpu_id', $id])->row();
                 $data['video'] = $existing_cpu->video;
                 $data['video_format'] = $existing_cpu->video_format;
             }
@@ -442,21 +441,21 @@ class Cpu extends CI_Controller {
                     return false;
                 }
 
-                if (!n_array($value, $allowed)) {
-                    $this->form_validation->set_message('video_format', 'Invalid video format. Invalid video format. Allowed: mp4, webm, ogg');
+                if (!in_array($value, $allowed)) {
+                    $this->form_validation->set_message('video_format', 'Invalid video format. Allowed: mp4, webm, ogg');
                     return false;
                 }
 
                 return true;
             }
-        ])
-        
+        ]);
+
         // Define validation rules as arrays
         $conditional_rules = [
             'brand' => ['required','max_length[50]'],
             'core' => ['required','integer'],
             'thread' => ['required','integer'],
-            'serie' => ['required' ,'max_length[100]'],
+            'serie' => ['required','max_length[100]'],
             'memory' => ['required','max_length[100]'],
             'manufacturing_node' => ['required','integer'],
             'integrated_graphic' => ['required','max_length[200]'],
@@ -474,31 +473,31 @@ class Cpu extends CI_Controller {
                         return true;
                     }
 
-                // Apply all rules
-                foreach ($rules as $rule) {
-                    if ($rule === 'integer' && !filter_var($value, FILTER_VALIDATE_INT)) {
-                        $this->form_validation->set_message($field, 'The {field} must be an integer');
-                        return false;
-                    }
-                    
-                    if (strpos($rule, 'max_length') === 0) {
-                        $max = (int) str_replace(['max_length[', ']'], '', $rule);
-                        if (strlen($value) > $max) {
-                            $this->form_validation->set_message($field, 'The {field} cannot exceed '.$max.' characters');
+                    // Apply all rules
+                    foreach ($rules as $rule) {
+                        if ($rule === 'integer' && !filter_var($value, FILTER_VALIDATE_INT)) {
+                            $this->form_validation->set_message($field, 'The {field} must be an integer');
+                            return false;
+                        }
+                        
+                        if (strpos($rule, 'max_length') === 0) {
+                            $max = (int) str_replace(['max_length[', ']'], '', $rule);
+                            if (strlen($value) > $max) {
+                                $this->form_validation->set_message($field, 'The {field} cannot exceed '.$max.' characters');
+                                return false;
+                            }
+                        }
+                        
+                        if ($rule === 'numeric' && !is_numeric($value)) {
+                            $this->form_validation->set_message($field, 'The {field} must be a number');
+                            return false;
+                        }
+
+                        if ($rule === 'required' && empty($value)) {
+                            $this->form_validation->set_message($field, 'The {field} field is required');
                             return false;
                         }
                     }
-                    
-                    if ($rule === 'numeric' && !is_numeric($value)) {
-                        $this->form_validation->set_message($field, 'The {field} must be a number');
-                        return false;
-                    }
-
-                    if ($rule === 'required' && empty($value)) {
-                        $this->form_validation->set_message($field, 'The {field} field is required');
-                        return false;
-                    }
-                }
 
                     return true;
                 }
@@ -513,7 +512,7 @@ class Cpu extends CI_Controller {
         }
 
         // Validate format if provided 
-        if($format) {
+        if ($format) {
             $format = strtolower($format);
             $allowed_formats = ['mp4', 'webm', 'ogg'];
             if (!in_array($format, $allowed_formats)) {
@@ -548,7 +547,7 @@ class Cpu extends CI_Controller {
             throw new Exception('File type not allowed(images or documents detected)');
         }
 
-        if(!in_array($mime_type, self::ALLOWED_VIDEO_MIME_TYPES)) {
+        if (!in_array($mime_type, self::ALLOWED_VIDEO_MIME_TYPES)) {
             throw new Exception('Only video files are allowed (MP4, WebM, Ogg)');
         }
 
@@ -564,14 +563,14 @@ class Cpu extends CI_Controller {
             mkdir($upload_path, 0755, true);
         }
 
-        // Detemine extension from MIME type
+        // Determine extension from MIME type or provided format
         $ext_map = [
             'video/mp4' => 'mp4',
             'video/webm' => 'webm',
             'video/ogg' => 'ogv'
         ];
 
-        $ext = $ext_map[$mime_type] ?? 'mp4';
+        $ext = $format ?: ($ext_map[$mime_type] ?? 'mp4');
         $filename = 'cpu_video_' . time() . '.' . $ext;
         $filepath = $upload_path . $filename;
 
@@ -579,15 +578,14 @@ class Cpu extends CI_Controller {
             throw new Exception('Failed to save video file. check directory permissions.');
         }
 
-        // Use provided format if available, otherwise detect from MIME 
-        $ext = $format ?: ($ext_map[$mime_type] ?? 'mp4');
-
         return $filename;
     }
 
     private function filter_fields($data) {
         $allowed_fields = [
-            'name', 'brand', 'core', 'thread', 'serie', 'memory', 'manufacturing_node', 'integrated_graphic', 'boost_clock', 'total_cache', 'video', 'price', 'updated_date'
+            'name', 'brand', 'core', 'thread', 'serie', 'memory', 
+            'manufacturing_node', 'integrated_graphic', 'boost_clock', 
+            'total_cache', 'video', 'video_format', 'price', 'updated_date'
         ];
 
         return array_intersect_key($data, array_flip($allowed_fields));
@@ -603,5 +601,3 @@ class Cpu extends CI_Controller {
         return $this->output;
     }
 }
-
-?>
