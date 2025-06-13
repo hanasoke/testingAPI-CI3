@@ -428,24 +428,18 @@ class Cpu extends CI_Controller {
         // Add video format validation
         $this->form_validation->set_rules('video_format', 'Video Format', [
             function($value) use ($current_data) {
-                // Skip if not updating video 
                 if (empty($this->input->post('video'))) {
                     return true;
                 }
-
+                
                 $allowed = ['mp4', 'webm', 'ogg'];
-                $value = strtolower($value);
-
-                if (empty($value)) {
-                    $this->form_validation->set_message('video_format', 'Video format is required when uploading video');
-                    return false;
-                }
-
+                $value = strtolower(trim($value));
+                
                 if (!in_array($value, $allowed)) {
-                    $this->form_validation->set_message('video_format', 'Invalid video format. Allowed: mp4, webm, ogg');
+                    $this->form_validation->set_message('video_format', 
+                        'Invalid video format. Allowed: ' . implode(', ', $allowed));
                     return false;
                 }
-
                 return true;
             }
         ]);
@@ -509,6 +503,14 @@ class Cpu extends CI_Controller {
         // Check if the video is empty or null
         if (empty($video_data)) {
             return null;
+        }
+
+        // Create directory if it doesn't exist
+        $upload_path = './public/video/cpus/';
+        if (!is_dir($upload_path)) {
+            if (!mkdir($upload_path, 0755, true)) {
+                throw new Exception('Failed to create video directory');
+            }
         }
 
         // Validate format if provided 
