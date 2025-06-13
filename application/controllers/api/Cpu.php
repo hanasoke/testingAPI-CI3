@@ -307,7 +307,7 @@ class Cpu extends CI_Controller {
 
             // Process video if present and valid
             if (!empty($data['video'])) {
-                if (!empty($data['video_format'])) {
+                if (empty($data['video_format'])) {
                     throw new Exception("Video format is required when updating video");
                 }
 
@@ -425,6 +425,31 @@ class Cpu extends CI_Controller {
                 return !$exists;
             }
         ]);
+
+        // Add video format validation
+        $this->form_validation->set_rules('video_format', 'Video Format', [
+            function($value) use ($current_data) {
+                // Skip if not updating video 
+                if (empty($this->input->post('video'))) {
+                    return true;
+                }
+
+                $allowed = ['mp4', 'webm', 'ogg'];
+                $value = strtolower($value);
+
+                if (empty($value)) {
+                    $this->form_validation->set_message('video_format', 'Video format is required when uploading video');
+                    return false;
+                }
+
+                if (!n_array($value, $allowed)) {
+                    $this->form_validation->set_message('video_format', 'Invalid video format. Invalid video format. Allowed: mp4, webm, ogg');
+                    return false;
+                }
+
+                return true;
+            }
+        ])
         
         // Define validation rules as arrays
         $conditional_rules = [
@@ -481,10 +506,19 @@ class Cpu extends CI_Controller {
         }
     }
 
-    private function process_video($video_data) {
+    private function process_video($video_data, $format = null) {
         // Check if the video is empty or null
         if (empty($video_data)) {
             return null;
+        }
+
+        // Validate format if provided 
+        if($format) {
+            $format = strtolower($format);
+            $allowed_formats = ['mp4', 'webm', 'ogg'];
+            if (!in_array($format, $allowed_formats)) {
+                throw new Exception('Invalid video format. Allowed: mp4, webm, ogg');
+            }
         }
 
         // If it's a data URI, extract the base64 part
@@ -544,6 +578,9 @@ class Cpu extends CI_Controller {
         if (!write_file($filepath, $video_binary)) {
             throw new Exception('Failed to save video file. check directory permissions.');
         }
+
+        // Use provided format if available, otherwise detect from MIME 
+        $ext = $format ?: ($ext_map[$mime_type] ?? 'mp4');
 
         return $filename;
     }
