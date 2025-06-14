@@ -14,7 +14,7 @@ class Api extends CI_Controller {
     public function users() {
         // Load the database and query
         $this->load->database();
-        $query = $this->db->get('users'); // Assuming you have a 'users' table
+        $query = $this->db->get('users'); 
 
         // Return JSON response
         $this->output
